@@ -2,7 +2,7 @@
   (:import (java.awt BorderLayout Event GridLayout Toolkit)
            (java.awt.event KeyEvent)
            (javax.swing AbstractAction Action BorderFactory 
-           JFrame JPanel JButton JMenu JMenuBar JTextField JLabel KeyStroke)
+           JFrame JPanel JButton JMenu JMenuBar JTextField JPasswordField JLabel KeyStroke)
            (javax.swing.event DocumentListener)))
 
 (defn create-action
@@ -36,3 +36,15 @@ reported by the Java runtime."
     component
 )
 
+(defmacro lazy-init [f & args] 
+  `(let [x# (delay (~f ~@args))] 
+    #(force x#)))
+
+(defn create-a-text-field
+  "Creates a temperature text field."
+  [default tooltip & flags]
+ 
+  (doto (if (contains? (set flags) :password) (JPasswordField. 15) (JTextField. 15))
+    (.setToolTipText tooltip)
+    (.setText default))
+)
