@@ -13,12 +13,13 @@
   (:import (java.io.ByteArrayInputStream))
   )
 
+(def prefs (.node (java.util.prefs.Preferences/userRoot) "/org/vi-server/jscfi"))  
 
-(def server-text-field (lazy-init create-a-text-field "127.0.0.1" "IP address or hostname of the server"))
-(def login-text-field (lazy-init create-a-text-field "test" "Username"))
-(def password-text-field (lazy-init create-a-text-field "test99test" "Password" :password))
-(def source-file-text-field (lazy-init create-a-text-field "/tmp/hello.c" "Local path of source code file"))
-(def resulting-file-text-field (lazy-init create-a-text-field "/tmp/hello.out" "Local path for output file"))
+(def server-text-field (lazy-init create-a-text-field (.get prefs "hostname" "127.0.0.1") "IP address or hostname of the server"))
+(def login-text-field (lazy-init create-a-text-field (.get prefs "login" "test") "Username"))
+(def password-text-field (lazy-init create-a-text-field (.get prefs "password" "test99test") "Password" :password))
+(def source-file-text-field (lazy-init create-a-text-field (.get prefs "sourcefile" "/tmp/hello.c") "Local path of source code file"))
+(def resulting-file-text-field (lazy-init create-a-text-field (.get prefs "outfile" "/tmp/hello.out") "Local path for output file"))
 
 (defn get-ssh-session [] 
     (def jsch (JSch.))
