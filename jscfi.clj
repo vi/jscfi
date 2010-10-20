@@ -1,8 +1,6 @@
 ;; Task uploader and executer for SCFI BSU
 ;; Clojure Swing example by Keith Bennett, March 2009 ;; kbennett -at- bbsinc -dot- biz
 
-(load "guilib")
-
 (ns jscfi
   (:import (java.awt BorderLayout Event GridLayout Toolkit)
            (java.awt.event KeyEvent)
@@ -11,6 +9,7 @@
            (javax.swing.event DocumentListener))
   (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp))
   (:import (java.io.ByteArrayInputStream))
+  (:use jscfi.guilib)
   )
 
 (def prefs (.node (java.util.prefs.Preferences/userRoot) "/org/vi-server/jscfi"))  

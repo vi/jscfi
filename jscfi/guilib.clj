@@ -1,4 +1,4 @@
-(ns jscfi
+(ns jscfi.guilib
   (:import (java.awt BorderLayout Event GridLayout Toolkit)
            (java.awt.event KeyEvent)
            (javax.swing AbstractAction Action BorderFactory 
