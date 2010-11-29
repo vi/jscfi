@@ -1,61 +1,41 @@
 ;; Task uploader and executer for SCFI BSU
 ;; Clojure Swing example by Keith Bennett, March 2009 ;; kbennett -at- bbsinc -dot- biz
 
-(ns jscfi
+(ns jscfi.jscfi
   (:import (java.awt BorderLayout Event GridLayout Toolkit)
            (java.awt.event KeyEvent)
            (javax.swing AbstractAction Action BorderFactory 
            JFrame JPanel JButton JMenu JMenuBar JTextField JLabel KeyStroke)
            (javax.swing.event DocumentListener))
-  (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp))
-  (:import (java.io.ByteArrayInputStream))
   (:use jscfi.guilib)
+  (:use jscfi.ssh)
   )
 
 (def prefs (.node (java.util.prefs.Preferences/userRoot) "/org/vi-server/jscfi"))  
 
 (def server-text-field (lazy-init create-a-text-field (.get prefs "hostname" "127.0.0.1") "IP address or hostname of the server"))
 (def login-text-field (lazy-init create-a-text-field (.get prefs "login" "test") "Username"))
-(def password-text-field (lazy-init create-a-text-field (.get prefs "password" "test99test") "Password" :password))
+(def password-text-field (lazy-init create-a-text-field (.get prefs "password" "test4test") "Password" :password))
 (def source-file-text-field (lazy-init create-a-text-field (.get prefs "sourcefile" "/tmp/hello.c") "Local path of source code file"))
 (def resulting-file-text-field (lazy-init create-a-text-field (.get prefs "outfile" "/tmp/hello.out") "Local path for output file"))
 
-(defn get-ssh-session [] 
-    (def jsch (JSch.))
-    (def session (.getSession jsch (.getText (login-text-field)) (.getText (server-text-field)) 22))
-    (def ui (proxy [UserInfo UIKeyboardInteractive][] 
-      (promptYesNo               [message] (print message) (newline) true)
-      (promptPassphrase          [message] (print message) (newline) true)
-      (promptPassword            [message] (print message) (newline) true)
-      (promptKeyboardInteractive [message] (print message) (newline) true)
-      (getPassword [] (.getText (password-text-field))
-       )))
-    (.setUserInfo session ui)
-    (.connect session 30000)
-    session
+(defn upload-action-impl [arg] 
+    (upload-file-to-server 
+	(.getText (source-file-text-field))
+	(.getText (server-text-field))
+        22
+        (.getText (login-text-field))
+        (.getText (password-text-field))  
+    )
 )
 
-(defn upload-file-to-server [arg] 
-    (def session (get-ssh-session))
-    (def sftp (.openChannel session "sftp"))
-    (.connect sftp 3000)
-    (.put sftp (.getText (source-file-text-field)) "source.c" ChannelSftp/OVERWRITE)
-    (.disconnect sftp)
-
-    (def shell (.openChannel session "shell"))
-    (.setOutputStream shell System/out)
-    (.setExtOutputStream shell System/err)
-    (.setInputStream shell (java.io.ByteArrayInputStream. (.getBytes "gcc -O2 -g -Wall source.c -o program\nexit\n")))
-    (.connect shell 3000)
-)
-
-(defn execute-program-on-server [arg] 
-    (def session (get-ssh-session))
-    (def shell (.openChannel session "shell"))
-    (.setOutputStream shell System/out)
-    (.setExtOutputStream shell System/err)
-    (.setInputStream shell (java.io.ByteArrayInputStream. (.getBytes "./program > output.txt\nexit\n")))
-    (.connect shell 3000)
+(defn execute-action-impl [arg] 
+    (execute-program-on-server 
+        (.getText (server-text-field))
+        22
+        (.getText (login-text-field))
+        (.getText (password-text-field)) 
+    )
 )
 
 (defn create-textfields-panel
@@ -98,14 +78,14 @@
             (KeyStroke/getKeyStroke KeyEvent/VK_X Event/CTRL_MASK) }))
 
 (def upload-action (create-action "Upload"
-    upload-file-to-server
+    upload-action-impl
 
     { Action/SHORT_DESCRIPTION  "Upload and compile the source code to SCFI BSU",
       Action/ACCELERATOR_KEY
             (KeyStroke/getKeyStroke KeyEvent/VK_U Event/CTRL_MASK) }))
 
 (def execute-action (create-action "Execute"
-    execute-program-on-server
+    execute-action-impl
 
     { Action/SHORT_DESCRIPTION  "Execute the code in SCFI BSU",
       Action/ACCELERATOR_KEY
@@ -175,4 +155,3 @@
     (def main-frame (create-frame))
     (.setVisible main-frame true))
 
-(main)
