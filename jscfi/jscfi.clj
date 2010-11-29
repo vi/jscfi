@@ -21,20 +21,6 @@
 (def source-file-text-field (lazy-init create-a-text-field (.get prefs "sourcefile" "/tmp/hello.c") "Local path of source code file"))
 (def resulting-file-text-field (lazy-init create-a-text-field (.get prefs "outfile" "/tmp/hello.out") "Local path for output file"))
 
-(defn login-action-impl [arg] 
-    (send ssh-session login-to-server 
-        (.getText (server-text-field))
-        22
-        (.getText (login-text-field))
-        (.getText (password-text-field))
-    ))
-
-(defn upload-action-impl [arg] 
-    (send ssh-session upload-file-to-server (.getText (source-file-text-field))))
-
-(defn execute-action-impl [arg] 
-    (send ssh-session execute-program-on-server))
-
 (defn create-textfields-panel
 "Creates panel containing the labels and text fields."
 []
@@ -75,21 +61,29 @@
             (KeyStroke/getKeyStroke KeyEvent/VK_X Event/CTRL_MASK) }))
 
 (def login-action (create-action "Login"
-    login-action-impl
+    (fn [_]
+	(send ssh-session login-to-server 
+	    (.getText (server-text-field))
+	    22
+	    (.getText (login-text-field))
+	    (.getText (password-text-field))
+	))
 
     { Action/SHORT_DESCRIPTION  "Log in in SCFI BSU through the SSH",
       Action/ACCELERATOR_KEY
             (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) }))
 
 (def upload-action (create-action "Upload"
-    upload-action-impl
+    (fn [_] (send ssh-session upload-file-to-server 
+	    (.getText (source-file-text-field))
+	    ))
 
     { Action/SHORT_DESCRIPTION  "Upload and compile the source code to SCFI BSU",
       Action/ACCELERATOR_KEY
             (KeyStroke/getKeyStroke KeyEvent/VK_U Event/CTRL_MASK) }))
 
 (def execute-action (create-action "Execute"
-    execute-action-impl
+    (fn [_] (send ssh-session execute-program-on-server))
 
     { Action/SHORT_DESCRIPTION  "Execute the code in SCFI BSU",
       Action/ACCELERATOR_KEY
