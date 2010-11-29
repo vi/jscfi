@@ -46,10 +46,19 @@
     session
 )
 
+(defn sendee-login-to-server [sess server port user password]
+    (def session (if (nil? sess) (get-ssh-session server port user password) sess))
+    session
+)
+
 (defn upload-file-to-server [file server port user password] 
     (send ssh-session sendee-upload-file-to-server file server port user password)
 )
 
 (defn execute-program-on-server [server port user password] 
     (send ssh-session sendee-execute-program-on-server server port user password)
+)
+
+(defn login-to-server [server port user password] 
+    (send ssh-session sendee-login-to-server server port user password)
 )

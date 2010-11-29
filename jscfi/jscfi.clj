@@ -31,6 +31,15 @@
     )
 )
 
+(defn login-action-impl [arg] 
+    (login-to-server 
+        (.getText (server-text-field))
+        22
+        (.getText (login-text-field))
+        (.getText (password-text-field)) 
+    )
+)
+
 (defn execute-action-impl [arg] 
     (execute-program-on-server 
         (.getText (server-text-field))
@@ -79,6 +88,13 @@
       Action/ACCELERATOR_KEY
             (KeyStroke/getKeyStroke KeyEvent/VK_X Event/CTRL_MASK) }))
 
+(def login-action (create-action "Login"
+    login-action-impl
+
+    { Action/SHORT_DESCRIPTION  "Log in in SCFI BSU through the SSH",
+      Action/ACCELERATOR_KEY
+            (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) }))
+
 (def upload-action (create-action "Upload"
     upload-action-impl
 
@@ -104,6 +120,7 @@
     action-menu (JMenu. "Action")]
 
     (.add file-menu    exit-action)
+    (.add action-menu    login-action)
     (.add action-menu    upload-action)
     (.add action-menu    execute-action)
     
@@ -120,6 +137,7 @@
     outer-panel (JPanel. (BorderLayout.))]
 
     (doto inner-panel
+      (.add (JButton. login-action))
       (.add (JButton. upload-action))
       (.add (JButton. execute-action))
       (.add (JButton. exit-action)))
