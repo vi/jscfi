@@ -21,8 +21,7 @@
 
 (def ssh-session (agent nil))
 
-(defn sendee-upload-file-to-server [sess file server port user password]
-    (def session (if (nil? sess) (get-ssh-session server port user password) sess))
+(defn upload-file-to-server [session file]
     (def sftp (.openChannel session "sftp"))
     (.connect sftp 3000)
     (.put sftp file "source.c" ChannelSftp/OVERWRITE)
@@ -36,8 +35,7 @@
     session
 )
 
-(defn sendee-execute-program-on-server [sess server port user password]
-    (def session (if (nil? sess) (get-ssh-session server port user password) sess))
+(defn execute-program-on-server [session]
     (def shell (.openChannel session "shell"))
     (.setOutputStream shell System/out)
     (.setExtOutputStream shell System/err)
@@ -46,19 +44,8 @@
     session
 )
 
-(defn sendee-login-to-server [sess server port user password]
+(defn login-to-server [sess server port user password]
     (def session (if (nil? sess) (get-ssh-session server port user password) sess))
     session
 )
 
-(defn upload-file-to-server [file server port user password] 
-    (send ssh-session sendee-upload-file-to-server file server port user password)
-)
-
-(defn execute-program-on-server [server port user password] 
-    (send ssh-session sendee-execute-program-on-server server port user password)
-)
-
-(defn login-to-server [server port user password] 
-    (send ssh-session sendee-login-to-server server port user password)
-)

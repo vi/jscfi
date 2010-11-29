@@ -21,33 +21,19 @@
 (def source-file-text-field (lazy-init create-a-text-field (.get prefs "sourcefile" "/tmp/hello.c") "Local path of source code file"))
 (def resulting-file-text-field (lazy-init create-a-text-field (.get prefs "outfile" "/tmp/hello.out") "Local path for output file"))
 
-(defn upload-action-impl [arg] 
-    (upload-file-to-server 
-	(.getText (source-file-text-field))
-	(.getText (server-text-field))
-        22
-        (.getText (login-text-field))
-        (.getText (password-text-field))  
-    )
-)
-
 (defn login-action-impl [arg] 
-    (login-to-server 
+    (send ssh-session login-to-server 
         (.getText (server-text-field))
         22
         (.getText (login-text-field))
-        (.getText (password-text-field)) 
-    )
-)
+        (.getText (password-text-field))
+    ))
+
+(defn upload-action-impl [arg] 
+    (send ssh-session upload-file-to-server (.getText (source-file-text-field))))
 
 (defn execute-action-impl [arg] 
-    (execute-program-on-server 
-        (.getText (server-text-field))
-        22
-        (.getText (login-text-field))
-        (.getText (password-text-field)) 
-    )
-)
+    (send ssh-session execute-program-on-server))
 
 (defn create-textfields-panel
 "Creates panel containing the labels and text fields."
