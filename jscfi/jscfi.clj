@@ -7,7 +7,7 @@
   (:import (java.awt BorderLayout Event GridLayout Toolkit)
            (java.awt.event KeyEvent)
            (javax.swing AbstractAction Action BorderFactory 
-           JFrame JPanel JButton JMenu JMenuBar JTextField JLabel KeyStroke)
+           JFrame JPanel JButton JMenu JMenuBar JTextField JLabel KeyStroke JTextArea)
            (javax.swing.event DocumentListener))
   (:use jscfi.guilib)
   (:use jscfi.ssh)
@@ -20,6 +20,8 @@
 (def password-text-field (lazy-init create-a-text-field (.get prefs "password" "test4test") "Password" :password))
 (def source-file-text-field (lazy-init create-a-text-field (.get prefs "sourcefile" "/tmp/hello.c") "Local path of source code file"))
 (def resulting-file-text-field (lazy-init create-a-text-field (.get prefs "outfile" "/tmp/hello.out") "Local path for output file"))
+
+(def status-area (lazy-init (fn [] (JTextArea.))))
 
 (defn create-textfields-panel
 "Creates panel containing the labels and text fields."
@@ -47,9 +49,15 @@
 	(.add (resulting-file-text-field))
     )
 
+    (doto (status-area)
+	(.setPreferredSize (java.awt.Dimension. 400 50))
+	(.setText "not connected")
+    )
+
     (doto outer-panel
       (.add label-panel BorderLayout/WEST)
-      (.add text-field-panel BorderLayout/CENTER))))
+      (.add text-field-panel BorderLayout/CENTER)
+      (.add (status-area) BorderLayout/SOUTH))))
 
 
 
@@ -63,6 +71,7 @@
 (def login-action (create-action "Login"
     (fn [_]
 	(send ssh-session login-to-server 
+	    (fn [new-status] (.setText (status-area) new-status))
 	    (.getText (server-text-field))
 	    22
 	    (.getText (login-text-field))
@@ -125,10 +134,6 @@
     (doto outer-panel
       (.add inner-panel BorderLayout/EAST)
       (.setBorder (BorderFactory/createEmptyBorder 10 0 0 0)))))
-
-
-
-
 
 (defn create-frame
 "Creates the main JFrame used by the program."

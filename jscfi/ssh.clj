@@ -4,7 +4,8 @@
   )                
 
 
-(defn get-ssh-session [server port user password] 
+(defn get-ssh-session [status-observer server port user password] 
+    (status-observer "initializing connection")
     (def jsch (JSch.))
     (def session (.getSession jsch user server port))
     (def ui (proxy [UserInfo UIKeyboardInteractive][] 
@@ -15,11 +16,18 @@
       (getPassword [] password)
        ))
     (.setUserInfo session ui)
+    (status-observer "connecting")
     (.connect session 3000)
+    (status-observer "connected")
     session
 )
 
 (def ssh-session (agent nil))
+
+(defn login-to-server [sess status-observer server port user password]
+    (def session (if (nil? sess) (get-ssh-session status-observer server port user password) sess))
+    session
+)
 
 (defn upload-file-to-server [session file]
     (def sftp (.openChannel session "sftp"))
@@ -44,8 +52,4 @@
     session
 )
 
-(defn login-to-server [sess server port user password]
-    (def session (if (nil? sess) (get-ssh-session server port user password) sess))
-    session
-)
 
