@@ -1,4 +1,6 @@
 ;; Task uploader and executer for SCFI BSU
+;; Written by Vitaly "_Vi" Shukela as mastership practice work for BSU
+;;
 ;; Clojure Swing example by Keith Bennett, March 2009 ;; kbennett -at- bbsinc -dot- biz
 
 (ns jscfi.jscfi
