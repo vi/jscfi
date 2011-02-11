@@ -4,6 +4,7 @@
     (:use org.vi-server.jscfi.fake)
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
+     (javax.swing JMenu JMenuBar)
      (java.awt.event KeyEvent MouseAdapter)
      (java.awt Event)
      (net.miginfocom.swing MigLayout)))      
@@ -21,7 +22,7 @@
     (toString [this] (format "%s    %s    %s    %s" (:status task) (:source-file task) (:name task) (:task-id task)))
     (task [this] task))
 
-(defn create-task-window [task jscfi]
+(defn create-task-window [task jscfi-agent]
  (let [
   panel (JPanel. (MigLayout. "", "[pref][grow]", "[pref]7[grow]"))
   frame (JFrame.)
@@ -32,8 +33,16 @@
   input-file-field  (JTextField.   (:input-file task))
   output-file-field (JTextField.   (:output-file task))
   node-count-field  (JTextField.   (str (:node-count task)))
-  action-display (create-action "Display" (fn [_] (prn task))
+  action-display (create-action "Debug Print" (fn [_] (prn task))
       { Action/SHORT_DESCRIPTION  "Display it", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) })
+  action-create (create-action "Create" (fn [_] (send jscfi-agent (fn[jscfi](register-task jscfi {
+	      :name           (.getText name-field)
+	      :status         :created
+	      :source-file    (.getText source-file-field)
+	      :input-file     (.getText input-file-field)
+	      :output-file    (.getText output-file-field)
+	      :node-count     (.getText node-count-field)}))))
+      { Action/SHORT_DESCRIPTION  "Create a task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_ENTER Event/CTRL_MASK) })
   button-panel (JPanel. (MigLayout. "", "[pref]", "[grow]5"))
   ]
   (doto frame 
@@ -41,10 +50,11 @@
    (.setContentPane panel))
   (doto button-panel
    (.add (JButton. action-display) "growx")
-   (.add (JButton. "Compile") "growx")
-   (.add (JButton. "Upload") "growx")
-   (.add (JButton. "Schedule") "growx")
-   (.add (JButton. "Download") "growx")
+   (.add (JButton. action-create) "growx")
+   (.add (JButton. "compile") "growx")
+   (.add (JButton. "upload") "growx")
+   (.add (JButton. "schedule") "growx")
+   (.add (JButton. "download") "growx")
    (.revalidate))
   (doto panel
    (.add (JLabel. "Name:"))          (.add name-field         "growx,wrap")
@@ -60,33 +70,47 @@
 
 (defn create-main-window [] 
  (let [
-  jscfi (connect (get-fake-jscfi-factory) nil "scfi" "test")
+  jscfi-agent (agent (connect (get-fake-jscfi-factory) nil "scfi" "test"))
   panel (JPanel. (MigLayout. "", "[grow][pref][pref]", "[pref][grow]"))
   frame (JFrame.)
   text-field (JTextField.)
   list-model (DefaultListModel.)
   jlist (JList. list-model)
-  action-add (create-action "Add" (fn [_] (.add list-model 0 (TaskListEntryImpl. {:name (.getText text-field)})))
-      { Action/SHORT_DESCRIPTION  "Add new entry to the list", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) })
-  action-display (create-action "Display" 
+  action-create (create-action "Create task" (fn [_] (.setVisible (create-task-window {} jscfi-agent) true))
+      { Action/SHORT_DESCRIPTION  "Open window for task creation", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_N Event/CTRL_MASK) })
+  action-refresh (create-action "Refresh" (fn [_] 
+	  (.clear list-model)
+	  (doall (map #(.add list-model 0 (TaskListEntryImpl. %)) (get-tasks @jscfi-agent))))
+      { Action/SHORT_DESCRIPTION  "Refresh the list of tasks", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_R Event/CTRL_MASK) })
+  action-open (create-action "Open" 
       (fn [_] 
        (let [index (.getSelectedIndex jlist)] 
 	(when (not= index -1) 
 	 (let [t (task (.elementAt list-model index))]
-	  (.setVisible (create-task-window t jscfi) true)))))
-      { Action/SHORT_DESCRIPTION  "Display it", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) })
+	  (.setVisible (create-task-window t jscfi-agent) true)))))
+      { Action/SHORT_DESCRIPTION  "Open selected task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_O Event/CTRL_MASK) })
+  menubar (JMenuBar.)
+  view-menu (JMenu. "File")
+  action-menu (JMenu. "Action")
   ]
   (doto frame 
    (.setSize 600 400)
-   (.setContentPane panel))
+   (.setContentPane panel)
+   (.setJMenuBar menubar))
   (doto panel
    (.add text-field "growx")
-   (.add (JButton. action-add) )
-   (.add (JButton. action-display) "wrap")
-   (.add (JScrollPane. jlist) "grow")
+   (.add (JButton. action-create) )
+   (.add (JButton. action-open) "wrap")
+   (.add (JScrollPane. jlist) "grow,span 3")
    (.revalidate))
-  (doall (map #(.add list-model 0 (TaskListEntryImpl. %)) (get-tasks jscfi)))  
-  (.addMouseListener jlist (proxy [MouseAdapter] [] (mouseClicked [event] (when (= (.getClickCount event) 2) (.actionPerformed action-display nil)))))
+  (.add view-menu    action-refresh)
+  (.add view-menu    action-open)
+  (.add action-menu    action-create)
+  (doto menubar
+   (.add view-menu)
+   (.add action-menu))
+  (.actionPerformed action-refresh nil) 
+  (.addMouseListener jlist (proxy [MouseAdapter] [] (mouseClicked [event] (when (= (.getClickCount event) 2) (.actionPerformed action-open nil)))))
   frame))
 
 (defn create-and-show-window []
