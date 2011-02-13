@@ -4,7 +4,7 @@
     (:use org.vi-server.jscfi.fake)
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
-     (javax.swing JMenu JMenuBar)
+     (javax.swing JMenu JMenuBar JPasswordField)
      (java.awt.event KeyEvent MouseAdapter)
      (java.awt Event)
      (net.miginfocom.swing MigLayout)))      
@@ -68,11 +68,30 @@
    (.revalidate))
    frame))
 
-(defn create-main-window [jscfi-factory] 
+(defn create-authentication-window [password-promise]
+ (let [
+  panel (JPanel. (MigLayout. "", "[grow]", "[grow][grow][grow]"))
+  frame (JFrame.)
+  password-field (JPasswordField.)
+  action-ok (create-action "OK" (fn [_] (deliver password-promise (.getText password-field))) {})
+  ]
+  (doto frame 
+   (.setSize 400 200)
+   (.setContentPane panel))
+  (doto panel
+   (.add (JLabel. "Enter the password:") "wrap")
+   (.add password-field "growx,wrap")
+   (.add (JButton. action-ok) )
+   (.revalidate))
+  frame))
+
+(defn create-main-window [jscfi-agent] 
  (let [
   observer (reify JscfiObserver 
-      (get-password [this] "passwd"))
-  jscfi-agent (agent (connect jscfi-factory observer "scfi" "test"))
+      (get-password [this] 
+       (let [password-promise (promise)] 
+	(SwingUtilities/invokeLater #(.setVisible (create-authentication-window password-promise) true)) 
+	@password-promise #_ "Will be delivered by the frame")))
   panel (JPanel. (MigLayout. "", "[grow][pref][pref]", "[pref][grow]"))
   frame (JFrame.)
   text-field (JTextField.)
@@ -111,12 +130,13 @@
   (doto menubar
    (.add view-menu)
    (.add action-menu))
+  (send jscfi-agent #(connect % observer "scfi" "test"))
   (.actionPerformed action-refresh nil) 
   (.addMouseListener jlist (proxy [MouseAdapter] [] (mouseClicked [event] (when (= (.getClickCount event) 2) (.actionPerformed action-open nil)))))
   frame))
 
 (defn create-and-show-window []
- (let [frame (create-main-window (get-fake-jscfi-factory))]
+ (let [frame (create-main-window (agent (get-fake-jscfi)))]
   (.setLocationRelativeTo frame nil)
   (.setVisible frame true) 
   frame))

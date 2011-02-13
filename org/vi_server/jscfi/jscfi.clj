@@ -18,6 +18,8 @@
     (^clojure.lang.PersistentArrayMap get-task [this id])
     (^clojure.lang.PersistentVector get-tasks [this])
     
+    (^Jscfi connect [this observer address user])
+    
     ;; The task lifecycle:
     ;; 1. The task is created (and may be registered in Jscfi): register-task
     ;; 2. Source code is uploaded to SCFI and gets compiled: compile-task
@@ -40,9 +42,5 @@
 
     ;; Update information about tasks
     (^Jscfi periodic-update [this])
-)
-
-(defprotocol JscfiFactory
-    (connect [this observer address user])
 )
 
