@@ -6,11 +6,11 @@
 
 (defprotocol JscfiObserver
     "Callbacks from Jscfi object"
-    (connectionStatusChanged [this])
-    (taskStatusChanged [this task])
-    (compilationFailed [this text])
-    (^String needKeyfile [this])
-    (^String needPassword [this])
+    (connection-status-changed [this])
+    (task-status-changed [this task])
+    (compilation-failed [this task text])
+    (^String get-keyfile [this])
+    (^String get-password [this])
 )
 
 (defprotocol Jscfi
