@@ -68,9 +68,11 @@
    (.revalidate))
    frame))
 
-(defn create-main-window [] 
+(defn create-main-window [jscfi-factory] 
  (let [
-  jscfi-agent (agent (connect (get-fake-jscfi-factory) nil "scfi" "test"))
+  observer (reify JscfiObserver 
+      (get-password [this] "passwd"))
+  jscfi-agent (agent (connect jscfi-factory observer "scfi" "test"))
   panel (JPanel. (MigLayout. "", "[grow][pref][pref]", "[pref][grow]"))
   frame (JFrame.)
   text-field (JTextField.)
@@ -114,7 +116,7 @@
   frame))
 
 (defn create-and-show-window []
- (let [frame (create-main-window)]
+ (let [frame (create-main-window (get-fake-jscfi-factory))]
   (.setLocationRelativeTo frame nil)
   (.setVisible frame true) 
   frame))
