@@ -66,24 +66,32 @@
    (.add (JLabel. "Node count:"))    (.add node-count-field   "growx,wrap")
    (.add button-panel "span 2")
    (.revalidate))
-   frame))
+  (.setLocationRelativeTo frame nil)
+  frame))
+
+
+
 
 (defn create-authentication-window [password-promise]
  (let [
   panel (JPanel. (MigLayout. "", "[grow]", "[grow][grow][grow]"))
   frame (JFrame.)
   password-field (JPasswordField.)
-  action-ok (create-action "OK" (fn [_] (deliver password-promise (.getText password-field))) {})
+  action-ok (create-action "OK" (fn [_] (deliver password-promise (.getText password-field)) (doto frame (.setVisible false) (.dispose)) ) {})
   ]
   (doto frame 
-   (.setSize 400 200)
+   (.setSize 400 120)
    (.setContentPane panel))
   (doto panel
    (.add (JLabel. "Enter the password:") "wrap")
    (.add password-field "growx,wrap")
    (.add (JButton. action-ok) )
    (.revalidate))
+  (.setLocationRelativeTo frame nil)
   frame))
+
+
+
 
 (defn create-main-window [jscfi] 
  (let [
