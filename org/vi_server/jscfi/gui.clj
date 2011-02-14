@@ -81,7 +81,10 @@
   ]
   (doto frame 
    (.setSize 400 120)
-   (.setContentPane panel))
+   (.setContentPane panel)
+   (.setDefaultCloseOperation JFrame/DO_NOTHING_ON_CLOSE)
+   (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (deliver password-promise "closed") (doto frame (.setVisible false) (.dispose)))))
+  )
   (doto panel
    (.add (JLabel. "Enter the password:") "wrap")
    (.add password-field "growx,wrap")
