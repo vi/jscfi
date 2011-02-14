@@ -13,41 +13,55 @@
 #_ (def t (get-task  j "server-33"))
 ;; 3. Play with Jscfi object "j" and task example task "t"
 
-(defn ^{:private true} changed-status [tasks task status] (map #(if (= (:id task) (:id %)) (update-in % [:status] (fn[_] status)) %) tasks))
+(defn ^{:private true} changed-status [tasks task-id status] (map #(if (= task-id (:id %)) (update-in % [:status] (fn[_] status)) %) tasks))
 (def ^{:pritave true} step {:scheduled :waiting, :running :completed, :waiting :running})
 (defn ^{:private true} step-states [tasks] (doall (map #(if (contains? step (:status %)) (update-in % [:status] (fn[x] (x step))) %) tasks)))
 
-(defmacro ^{:private true} fj-method [name new-tasks] 
- `(~name  [this task] (new FakeJscfi observer new-tasks connected)))
+(defn ^{:private true} fj-method [name add-args new-tasks] 
+ `(~name  [~'this ~@add-args] 
+     (send ~'state-agent 
+      (fn[~'state] ;; does not need to be hygienic
+       (let[
+	~'tasks (:tasks ~'state)
+	~'observer (:observer ~'state)
+	~'connected (:connected ~'state)
+	] 
+	(assoc ~'state :tasks ~new-tasks))))
+     nil))
+(defmacro ^{:private true} deftype-my [methods-vector & rest]
+ `(deftype ~@rest ~@(map #(apply fj-method %) methods-vector)))
 
-(deftype FakeJscfi [observer tasks connected] Jscfi
-    (get-tasks [this] tasks)
-    (get-task [this id] (loop [t tasks] (if (= (:task-id (first t)) id) (first t) (if (empty? t) nil (recur (next t) )))))
-    (register-task [this task] (new FakeJscfi observer (conj tasks (update-in task [:id] (fn[_] (.toString (rand))))) connected))
+(deftype-my [
+    [compile-task   (task-id) (changed-status tasks task-id :compiled)]
+    [upload-task    (task-id) (changed-status tasks task-id :uploaded)]
+    [schedule-task  (task-id) (changed-status tasks task-id :scheduled)]
+    [cancel-task    (task-id) (changed-status tasks task-id :cancelled)]
+    [suspend-task   (task-id) (changed-status tasks task-id :suspended)]
+    [resume-task    (task-id) (changed-status tasks task-id :resumed)]
+    [download-task  (task-id) (changed-status tasks task-id :downloaded)]
+    [clear-task     (task-id) (changed-status tasks task-id :cleared)]
 
-    (compile-task  [this task] (new FakeJscfi observer (changed-status tasks task :compiled) connected))
-    (upload-task   [this task] (new FakeJscfi observer (changed-status tasks task :uploaded) connected)) 
-    (schedule-task [this task] (new FakeJscfi observer (changed-status tasks task :sheduled) connected)) 
-    (cancel-task   [this task] (new FakeJscfi observer (changed-status tasks task :cancelled) connected)) 
-    (suspend-task  [this task] (new FakeJscfi observer (changed-status tasks task :suspended) connected)) 
-    (resume-task   [this task] (new FakeJscfi observer (changed-status tasks task :scheduled) connected)) 
-    (download-task [this task] (new FakeJscfi observer (changed-status tasks task :downloaded) connected)) 
-    (clear-task    [this task] (new FakeJscfi observer (changed-status tasks task :cleared) connected)) 
+    [register-task (task) (conj tasks (update-in task [:id] (fn[_] (.toString (rand)))))]
 
-    (periodic-update [this] (new FakeJscfi observer (step-states tasks) connected))
+    [periodic-update () (step-states tasks)]
 
+    ] FakeJscfi [state-agent] Jscfi
+    (get-tasks [this] (:tasks @state-agent))
+    (get-task [this id] (loop [t (get-tasks this)] (if (= (:id (first t)) id) (first t) (if (empty? t) nil (recur (next t) )))))
+    
     (connect [this observer address username]
-        (prn "Connecting to " username "@" address)
-	(if (and (= address "scfi") (= username "test"))
-	 (let [jscfi (new FakeJscfi observer tasks true)]    
-	  (when (not connected) (when (not= (get-password observer) "passwd") (throw (RuntimeException. "Invalid password"))))
-	  jscfi)
-	 nil))
+        (printf "Connecting to %s@%s\n" username address)
+	(send state-agent (fn[state]
+	   (if (and (= address "scfi") (= username "test"))
+	    (do
+	     (when (not= (get-password observer) "passwd") (throw (RuntimeException. "Invalid password")))
+	     (-> state (assoc :connected true) (assoc :observer observer)))
+	    state))))
 )
 
-(defn get-fake-jscfi [] (new FakeJscfi nil [
+(defn get-fake-jscfi [] (new FakeJscfi (agent {:observer nil, :tasks [
    {:name "Qqq" :source-file "qqq.c" :input-file "input.txt" :output-file "output.txt"
-	:id 0.3232 :task-id "server-33" :node-count 4 :status :waiting}
+	:id 0.3232 :outer-id "server-33" :node-count 4 :status :waiting}
    {:name "Www" :source-file "www.c" :input-file "input.txt" :output-file "output.txt"
-	:id 0.2342 :task-id "server-34" :node-count 1 :status :running}
-   ] false))
+	:id 0.2342 :outer-id "server-34" :node-count 1 :status :running}
+   ], :connected false})))

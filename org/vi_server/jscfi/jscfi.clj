@@ -13,12 +13,13 @@
     (^String get-password [this])
 )
 
+;; The object is stateful and expected to use agents inside.
 (defprotocol Jscfi
     "Connection to SCFI"
-    (^clojure.lang.PersistentArrayMap get-task [this id])
+    (^clojure.lang.PersistentArrayMap get-task [this task-id])
     (^clojure.lang.PersistentVector get-tasks [this])
     
-    (^Jscfi connect [this observer address user])
+    (connect [this observer address user])
     
     ;; The task lifecycle:
     ;; 1. The task is created (and may be registered in Jscfi): register-task
@@ -30,17 +31,17 @@
     ;; 6. The output file is downloaded from SCFI: download-task
     ;; 7. Source code, executable, input and output files and other things are cleared from SCFI: clear-task
 
-    (^Jscfi register-task [this task])
-    (^Jscfi compile-task [this task])
-    (^Jscfi upload-task [this task])
-    (^Jscfi schedule-task [this task])
-    (^Jscfi cancel-task [this task])
-    (^Jscfi suspend-task [this task])
-    (^Jscfi resume-task [this task])
-    (^Jscfi download-task [this task])
-    (^Jscfi clear-task [this task])
+    (register-task [this task-id])
+    (compile-task [this task-id])
+    (upload-task [this task-id])
+    (schedule-task [this task-id])
+    (cancel-task [this task-id])
+    (suspend-task [this task-id])
+    (resume-task [this task-id])
+    (download-task [this task-id])
+    (clear-task [this task-id])
 
     ;; Update information about tasks
-    (^Jscfi periodic-update [this])
+    (periodic-update [this])
 )
 
