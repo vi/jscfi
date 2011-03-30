@@ -5,7 +5,7 @@
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
      (javax.swing JMenu JMenuBar JPasswordField)
-     (java.awt.event KeyEvent MouseAdapter)
+     (java.awt.event KeyEvent MouseAdapter WindowAdapter)
      (java.awt Event)
      (net.miginfocom.swing MigLayout)))      
 
@@ -72,23 +72,40 @@
 
 
 
-(defn create-authentication-window [password-promise]
+(defn create-authentication-window [jscfi]
  (let [
-  panel (JPanel. (MigLayout. "", "[grow]", "[grow][grow][grow]"))
+  panel (JPanel. (MigLayout. "", "[][grow]", "[grow][grow][grow][grow][grow]"))
   frame (JFrame.)
+  user-field (JTextField. "test")
+  server-field (JTextField. "scfi")
   password-field (JPasswordField.)
-  action-ok (create-action "OK" (fn [_] (deliver password-promise (.getText password-field)) (doto frame (.setVisible false) (.dispose)) ) {})
+  keyfile-field (JTextField.)
+  auth-observer (reify AuthObserver
+      (get-password [this] (.getText password-field))
+      (get-keyfile [this] (.getText keyfile-field))
+      (auth-succeed [this] (doto frame (.setVisible false) (.dispose)))
+      (auth-failed [this] (javax.swing.JOptionPane/showMessageDialog nil 
+			   "Authentication failed" "jscfi" javax.swing.JOptionPane/INFORMATION_MESSAGE))
+      )
+  action-connect (create-action "Connect" (fn [_] 
+	  (connect jscfi auth-observer (.getText server-field) (.getText user-field))) {})
   ]
   (doto frame 
-   (.setSize 400 120)
+   (.setSize 400 180)
    (.setContentPane panel)
    (.setDefaultCloseOperation JFrame/DO_NOTHING_ON_CLOSE)
-   (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (deliver password-promise "closed") (doto frame (.setVisible false) (.dispose)))))
+   (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (comment "There was password delivery here") (doto frame (.setVisible false) (.dispose)))))
   )
   (doto panel
-   (.add (JLabel. "Enter the password:") "wrap")
+   (.add (JLabel. "Server:"))
+   (.add server-field "growx,wrap")
+   (.add (JLabel. "Login:"))
+   (.add user-field "growx,wrap")
+   (.add (JLabel. "Password:"))
    (.add password-field "growx,wrap")
-   (.add (JButton. action-ok) )
+   (.add (JLabel. "Keyfile:"))
+   (.add keyfile-field "growx,wrap")
+   (.add (JButton. action-connect) "span 2")
    (.revalidate))
   (.setLocationRelativeTo frame nil)
   frame))
@@ -98,13 +115,11 @@
 
 (defn create-main-window [jscfi] 
  (let [
-  observer (reify JscfiObserver 
-      (get-password [this] 
-       (let [password-promise (promise)] 
-	(SwingUtilities/invokeLater #(.setVisible (create-authentication-window password-promise) true)) 
-	@password-promise #_ "Will be delivered by the frame")))
   panel (JPanel. (MigLayout. "", "[grow][pref][pref]", "[pref][grow]"))
   frame (JFrame.)
+  observer (reify JscfiObserver 
+      (connected [this] (.setVisible frame true))
+      )
   text-field (JTextField.)
   list-model (DefaultListModel.)
   jlist (JList. list-model)
@@ -128,7 +143,8 @@
   (doto frame 
    (.setSize 600 400)
    (.setContentPane panel)
-   (.setJMenuBar menubar))
+   (.setJMenuBar menubar)
+   (.setLocationRelativeTo nil))
   (doto panel
    (.add text-field "growx")
    (.add (JButton. action-create) )
@@ -140,19 +156,14 @@
   (.add action-menu    action-create)
   (doto menubar
    (.add view-menu)
-   (.add action-menu))
-  (connect jscfi observer "scfi" "test")
+   (.add action-menu))                
+  (set-observer jscfi observer)
+  (.setVisible (create-authentication-window jscfi) true)
   (.actionPerformed action-refresh nil) 
   (.addMouseListener jlist (proxy [MouseAdapter] [] (mouseClicked [event] (when (= (.getClickCount event) 2) (.actionPerformed action-open nil)))))
   frame))
 
-(defn create-and-show-window []
- (let [frame (create-main-window (get-fake-jscfi))]
-  (.setLocationRelativeTo frame nil)
-  (.setVisible frame true) 
-  frame))
-
 (defn main []
- (SwingUtilities/invokeLater create-and-show-window))
+ (SwingUtilities/invokeLater (fn [](create-main-window (get-fake-jscfi)))))
 
 

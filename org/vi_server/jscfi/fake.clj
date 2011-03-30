@@ -24,6 +24,7 @@
        (let[
 	~'tasks (:tasks ~'state)
 	~'observer (:observer ~'state)
+	~'auth-observer (:auth-observer ~'state)
 	~'connected (:connected ~'state)
 	] 
 	(assoc ~'state :tasks ~new-tasks))))
@@ -49,17 +50,25 @@
     (get-tasks [this] (:tasks @state-agent))
     (get-task [this id] (loop [t (get-tasks this)] (if (= (:id (first t)) id) (first t) (if (empty? t) nil (recur (next t) )))))
     
-    (connect [this observer address username]
+    (connect [this auth-observer address username]
         (printf "Connecting to %s@%s\n" username address)
 	(send state-agent (fn[state]
 	   (if (and (= address "scfi") (= username "test"))
-	    (do
-	     (when (not= (get-password observer) "passwd") (throw (RuntimeException. "Invalid password")))
-	     (-> state (assoc :connected true) (assoc :observer observer)))
+	     (if (not= (get-password auth-observer) "passwd") 
+	      (do 
+	       (auth-failed auth-observer)
+	       state)
+	      (do
+	       (auth-succeed auth-observer)
+	       (connected (:observer state))
+	       (-> state (assoc :connected true) (assoc :auth-observer auth-observer))))
 	    state))))
+    (set-observer [this observer]
+     (send state-agent (fn[state]
+	     (-> state (assoc :observer observer)))))     
 )
 
-(defn get-fake-jscfi [] (new FakeJscfi (agent {:observer nil, :tasks [
+(defn get-fake-jscfi [] (new FakeJscfi (agent {:observer nil, :auth-observer nil, :tasks [
    {:name "Qqq" :source-file "qqq.c" :input-file "input.txt" :output-file "output.txt"
 	:id 0.3232 :outer-id "server-33" :node-count 4 :status :waiting}
    {:name "Www" :source-file "www.c" :input-file "input.txt" :output-file "output.txt"

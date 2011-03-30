@@ -9,8 +9,15 @@
     (connection-status-changed [this])
     (task-status-changed [this task])
     (compilation-failed [this task text])
+    (connected [this]) ; dup from auth-observer's auth-succeed
+)
+
+(defprotocol AuthObserver
+    "Authentication-related callbacks from Jscfi object"
     (^String get-keyfile [this])
     (^String get-password [this])
+    (auth-succeed [this])
+    (auth-failed [this])
 )
 
 ;; The object is stateful and expected to use agents inside.
@@ -19,7 +26,8 @@
     (^clojure.lang.PersistentArrayMap get-task [this task-id])
     (^clojure.lang.PersistentVector get-tasks [this])
     
-    (connect [this observer address user])
+    (connect [this auth-observer address user])
+    (set-observer [this observer])
     
     ;; The task lifecycle:
     ;; 1. The task is created (and may be registered in Jscfi): register-task
