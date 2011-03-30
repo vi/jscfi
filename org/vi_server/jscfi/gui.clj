@@ -47,7 +47,9 @@
   ]
   (doto frame 
    (.setSize 600 300)
-   (.setContentPane panel))
+   (.setContentPane panel)
+   (.setTitle "Jscfi task")
+   )
   (doto button-panel
    (.add (JButton. action-display) "growx")
    (.add (JButton. action-create) "growx")
@@ -74,7 +76,7 @@
 
 (defn create-authentication-window [jscfi]
  (let [
-  panel (JPanel. (MigLayout. "", "[][grow]", "[grow][grow][grow][grow][grow]"))
+  panel (JPanel. (MigLayout. "", "[][grow]", "[grow]4[grow]"))
   frame (JFrame.)
   user-field (JTextField. "test")
   server-field (JTextField. "scfi")
@@ -95,6 +97,7 @@
    (.setContentPane panel)
    (.setDefaultCloseOperation JFrame/DO_NOTHING_ON_CLOSE)
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (comment "There was password delivery here") (doto frame (.setVisible false) (.dispose)))))
+   (.setTitle "Login to SCFI")
   )
   (doto panel
    (.add (JLabel. "Server:"))
@@ -144,7 +147,8 @@
    (.setSize 600 400)
    (.setContentPane panel)
    (.setJMenuBar menubar)
-   (.setLocationRelativeTo nil))
+   (.setLocationRelativeTo nil)
+   (.setTitle "Jscfi - SuperComputer Phoenix Initiative GUI"))
   (doto panel
    (.add text-field "growx")
    (.add (JButton. action-create) )
