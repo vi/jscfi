@@ -1,7 +1,7 @@
 (ns org.vi-server.jscfi.gui
     "GUI for Jscfi"
     (:use org.vi-server.jscfi.jscfi)
-    (:use org.vi-server.jscfi.fake)
+    (:use org.vi-server.jscfi.real)
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
      (javax.swing JMenu JMenuBar JPasswordField)
@@ -76,18 +76,20 @@
 
 (defn create-authentication-window [jscfi]
  (let [
-  panel (JPanel. (MigLayout. "", "[][grow]", "[grow]4[grow]"))
+  panel (JPanel. (MigLayout. "", "[][grow]", "[grow]4[grow][grow]"))
   frame (JFrame.)
   user-field (JTextField. "test")
   server-field (JTextField. "scfi")
   password-field (JPasswordField.)
   keyfile-field (JTextField.)
+  connstage-label (JLabel.)
   auth-observer (reify AuthObserver
       (get-password [this] (.getText password-field))
       (get-keyfile [this] (.getText keyfile-field))
       (auth-succeed [this] (doto frame (.setVisible false) (.dispose)))
       (auth-failed [this] (javax.swing.JOptionPane/showMessageDialog nil 
 			   "Authentication failed" "jscfi" javax.swing.JOptionPane/INFORMATION_MESSAGE))
+      (connection-stage [this msg] (SwingUtilities/invokeLater (fn [](.setText connstage-label msg))))
       )
   action-connect (create-action "Connect" (fn [_] 
 	  (connect jscfi auth-observer (.getText server-field) (.getText user-field))) {})
@@ -108,6 +110,7 @@
    (.add password-field "growx,wrap")
    (.add (JLabel. "Keyfile:"))
    (.add keyfile-field "growx,wrap")
+   (.add connstage-label "span 2,wrap")
    (.add (JButton. action-connect) "span 2")
    (.revalidate))
   (.setLocationRelativeTo frame nil)
@@ -168,6 +171,6 @@
   frame))
 
 (defn main []
- (SwingUtilities/invokeLater (fn [](create-main-window (get-fake-jscfi)))))
+ (SwingUtilities/invokeLater (fn [](create-main-window (get-real-jscfi)))))
 
 

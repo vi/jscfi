@@ -18,6 +18,7 @@
     (^String get-password [this])
     (auth-succeed [this])
     (auth-failed [this])
+    (connection-stage [this msg])
 )
 
 ;; The object is stateful and expected to use agents inside.
