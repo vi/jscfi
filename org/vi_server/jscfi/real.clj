@@ -17,6 +17,8 @@
 	    jsch (JSch.)
 	    _1 (when (not= (get-keyfile auth-observer) "")
 		(try (.addIdentity jsch (get-keyfile auth-observer)) (catch Exception e (.printStackTrace e))))
+	    _2 (when (not= (get-hostsfile auth-observer) "")
+		(try (.setKnownHosts jsch (get-hostsfile auth-observer)) (catch Exception e (.printStackTrace e))))
 	    session (.getSession jsch username address 22)
 	    password-attempts (atom 0)
 	    ui (proxy [UserInfo UIKeyboardInteractive][]

@@ -16,6 +16,7 @@
     "Authentication-related callbacks from Jscfi object"
     (^String get-keyfile [this])
     (^String get-password [this])
+    (^String get-hostsfile [this])
     (auth-succeed [this])
     (auth-failed [this])
     (connection-stage [this msg])
