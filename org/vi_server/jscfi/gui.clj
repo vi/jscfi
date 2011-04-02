@@ -78,15 +78,21 @@
  (let [
   panel (JPanel. (MigLayout. "", "[][grow]", "[grow]4[grow][grow]"))
   frame (JFrame.)
-  user-field (JTextField. "test")
-  server-field (JTextField. "scfi")
+  prefs (.node (java.util.prefs.Preferences/userRoot) "/org/vi-server/jscfi")
+  user-field (JTextField. (.get prefs "login" "zimyanin"))
+  server-field (JTextField. (.get prefs "hostname" "217.21.43.14"))
   password-field (JPasswordField.)
-  keyfile-field (JTextField.)
+  keyfile-field (JTextField. (.get prefs "keyfile" ""))
   connstage-label (JLabel.)
   auth-observer (reify AuthObserver
       (get-password [this] (.getText password-field))
       (get-keyfile [this] (.getText keyfile-field))
-      (auth-succeed [this] (doto frame (.setVisible false) (.dispose)))
+      (auth-succeed [this] 
+       (.put prefs "login" (.getText user-field))
+       (.put prefs "hostname" (.getText server-field))
+       (.put prefs "keyfile" (.getText keyfile-field))
+       (doto frame (.setVisible false) (.dispose))
+       )
       (auth-failed [this] (javax.swing.JOptionPane/showMessageDialog nil 
 			   "Authentication failed" "jscfi" javax.swing.JOptionPane/INFORMATION_MESSAGE))
       (connection-stage [this msg] (SwingUtilities/invokeLater (fn [](.setText connstage-label msg))))
