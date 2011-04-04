@@ -1,6 +1,7 @@
 (ns org.vi-server.jscfi.real
  "Real Jscfi that interacts with with SSH"
  (:use org.vi-server.jscfi.jscfi)
+ (:require [org.danlarkin.json :as json])
  (:use [clojure.contrib.string :only [split join upper-case lower-case trim blank?]])
  (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp))
  (:import (java.io.ByteArrayInputStream))
@@ -51,19 +52,29 @@
     Resource_List.nodect = 2
     Resource_List.nodes = 2
     Resource_List.walltime = 00:00:01
-    Variable_List = PBS_O_HOME=/home/shukela,PBS_O_LANG=en_US.UTF-8,
-	PBS_O_LOGNAME=shukela,
-	PBS_O_PATH=/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/
-	cnet/bin/:/usr/NX/bin:/usr/libexec/nx:/home/shukela/bin,
-	PBS_O_MAIL=/var/spool/mail/shukela,PBS_O_SHELL=/bin/bash,
-	PBS_SERVER=server-2,PBS_O_HOST=server-2,
-	PBS_O_WORKDIR=/home/shukela/testscript,PBS_O_QUEUE=batch
+    Variable_List = PBS_O_HOME=/home/shukela,PBS_O_LANG=en_US.UTF-8,PBS_O_LOGNAME=shukela,PBS_O_PATH=/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/cnet/bin/:/usr/NX/bin:/usr/libexec/nx:/home/shukela/bin,PBS_O_MAIL=/var/spool/mail/shukela,PBS_O_SHELL=/bin/bash,PBS_SERVER=server-2,PBS_O_HOST=server-2,PBS_O_WORKDIR=/home/shukela/testscript,PBS_O_QUEUE=batch
     etime = Mon Apr  4 14:29:29 2011
     exit_status = 0
     submit_args = run.pbs 
     ")
-    qstat-output
-)
+    (let [
+     taskwise (filter #(not (empty? %)) (split #"Job Id: " qstat-output))
+     ]
+     (map (fn[task-description] 
+	(let [
+	 strings (split #"\n\s+" task-description)
+	 task-id (first strings)
+	 strprops (next strings)
+	 properties (reduce (fn [coll strprop] 
+		 (let [re-results (re-find #"\s*(.*?)\s*=\s*(.*)" strprop)]
+		  (if re-results 
+		   (assoc coll (keyword (nth re-results 1)) (nth re-results 2))
+		   coll)
+		  )) {:job-id task-id} strprops)
+	 ]
+	    properties
+	)
+	) taskwise)))
 
 (deftype RealJscfi [state-agent] Jscfi
     (get-tasks [this] 
@@ -71,9 +82,9 @@
       (when (:connected state)
 	(let [
 	 session (:session state)
-	 tasklist (ssh-execute session "qstat -f" nil)
-	 ]
-	 (println (interpret-task-list tasklist))
+	 tasklist (ssh-execute session "qstat -f1" nil)
+	 ]                                                     
+	 (println (json/encode (interpret-task-list tasklist)))
 	 ))
       (:tasks @state-agent)
       ))

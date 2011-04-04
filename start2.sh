@@ -1,2 +1,3 @@
 #!/bin/sh
-AWT_TOOLKIT=MToolkit java -cp .:/usr/share/java/clojure.jar:/usr/share/java/clojure-contrib.jar:/usr/share/java/jsch.jar:/usr/share/java/miglayout.jar clojure.main org/vi_server/jscfi/main.clj
+JP=/usr/share/java
+AWT_TOOLKIT=MToolkit java -cp .:$JP/clojure.jar:$JP/clojure-contrib.jar:$JP/clojure-json-1.2.jar:$JP/jsch.jar:$JP/miglayout.jar clojure.main org/vi_server/jscfi/main.clj
