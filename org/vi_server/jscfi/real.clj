@@ -3,10 +3,34 @@
  (:use org.vi-server.jscfi.jscfi)
  (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp))
  (:import (java.io.ByteArrayInputStream))
- )      
+ )  
+
+(defn ^String ssh-execute [session command input]
+ (try
+  (let [
+   channel (.openChannel session "exec")
+   output (java.io.ByteArrayOutputStream.)
+   input (if input (java.io.ByteArrayOutputStream. (.getBytes input)) nil)
+   ]
+   (doto channel
+    (.setOutputStream output)
+    (.setExtOutputStream System/err)
+    (.setInputStream input)
+    (.setCommand command)
+    (.connect 3000))
+   (while (not (.isClosed channel)) (Thread/sleep 100))
+   (str output))
+  (catch Exception e (.printStackTrace e) nil)))
+
 (deftype RealJscfi [state-agent] Jscfi
-    (get-tasks [this] (:tasks @state-agent))
-    (get-task [this id] (loop [t (get-tasks this)] (if (= (:id (first t)) id) (first t) (if (empty? t) nil (recur (next t) )))))
+    (get-tasks [this] 
+     (let [state @state-agent]
+      (when (:connected state)
+	(let [session (:session state)]
+	 (println (ssh-execute session "qstat -a | perl -ne 'chomp; next if /Job id\\s+Name/; next if /^-----------/; s/\\s+/:/g; print \"$_\n\"'" nil))))
+      (:tasks @state-agent)
+      ))
+    (get-task [this id] (loop [t (:tasks @state-agent)] (if (= (:id (first t)) id) (first t) (if (empty? t) nil (recur (next t) )))))
     (set-observer [this observer]
      (send state-agent (fn[state]
 	     (-> state (assoc :observer observer)))))     
@@ -42,7 +66,7 @@
 	     (connection-stage auth-observer (format "Connected to %s@%s" username address))
 	     (auth-succeed auth-observer)
 	     (connected (:observer state))
-	     (-> state (assoc :connected true) (assoc :auth-observer auth-observer))
+	     (-> state (assoc :connected true) (assoc :auth-observer auth-observer) (assoc :session session))
 	     (catch Exception e 
 	      (.printStackTrace e)
 	      (auth-failed auth-observer)
