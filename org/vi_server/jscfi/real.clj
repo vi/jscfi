@@ -90,29 +90,24 @@
 	~'observer (:observer ~'state)
 	~'auth-observer (:auth-observer ~'state)
 	~'connected (:connected ~'state)
+	~'session (:session ~'state)
 	] 
 	~@new-state)))
      nil))
 
-(expand-first #{rj-method} (deftype RealJscfi [state-agent] Jscfi
-    (periodic-update [this] 
-     (let [state @state-agent]
-      (when (:connected state)
-	(let [
-	 session (:session state)
-	 tasklist (ssh-execute session "qstat -f1" nil)
-	 ]                                                     
-	 (println (yaml/generate-string (interpret-task-list tasklist)))
-	 ))
-      ))
+(expand-first #{rj-method} 
+ (deftype RealJscfi [state-agent] Jscfi
+    (rj-method periodic-update ()
+      (when connected
+	(let [tasklist (ssh-execute session "qstat -f1" nil)]                                                     
+	 (println (yaml/generate-string (interpret-task-list tasklist)))))
+      state)
 
     (get-tasks [this] (vals (:tasks @state-agent)) )
     (get-task [this id] (id (:tasks @state-agent)) )
     (rj-method register-task (task) (let [rnd-id (.toString (rand))] (assoc state :tasks (assoc tasks rnd-id (assoc task :id rnd-id)))))
 
-    (set-observer [this observer]
-     (send state-agent (fn[state]
-	     (-> state (assoc :observer observer)))))     
+    (rj-method set-observer (observer_) (assoc state :observer observer_))
     (connect [this auth-observer address username]
 	(send state-agent (fn[state]
 	;(do (let [state @state-agent]
