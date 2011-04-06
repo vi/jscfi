@@ -127,7 +127,7 @@
    (.setSize 400 220)
    (.setContentPane panel)
    (.setDefaultCloseOperation JFrame/DO_NOTHING_ON_CLOSE)
-   (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (comment "There was password delivery here") (doto frame (.setVisible false) (.dispose)))))
+   (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (comment "There was password delivery here") (System/exit 0))))
    (.setTitle "Login to SCFI")
   )
   (doto panel
@@ -218,6 +218,7 @@
   (.setVisible (create-authentication-window jscfi) true)
   (.actionPerformed action-refresh nil) 
   (.addMouseListener jlist (proxy [MouseAdapter] [] (mouseClicked [event] (when (= (.getClickCount event) 2) (.actionPerformed action-open nil)))))
+  (.addWindowListener frame (proxy [WindowAdapter] [] (windowClosing [_] (comment "There was password delivery here") (System/exit 0))))
   (let [task (proxy [TimerTask] []
       	(run [] (periodic-update jscfi)))]
    (. (new Timer) (schedule task (long 3000) (long 5000))))
