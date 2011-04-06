@@ -1,3 +1,4 @@
 #!/bin/sh
 JP=/usr/share/java
-AWT_TOOLKIT=MToolkit java -cp .:$JP/clojure.jar:$JP/clojure-contrib.jar:$JP/clojure-json-1.2.jar:$JP/jsch.jar:$JP/miglayout.jar clojure.main org/vi_server/jscfi/main.clj
+DEPS=$JP/clojure.jar:$JP/clojure-contrib.jar:$JP/clj-yaml-0.3.0.jar:$JP/snakeyaml-1.5.jar:$JP/jsch.jar:$JP/miglayout.jar
+AWT_TOOLKIT=MToolkit java -cp .:$DEPS clojure.main org/vi_server/jscfi/main.clj

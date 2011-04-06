@@ -1,7 +1,8 @@
 (ns org.vi-server.jscfi.real
  "Real Jscfi that interacts with with SSH"
  (:use org.vi-server.jscfi.jscfi)
- (:require [org.danlarkin.json :as json])
+ ;(:require [org.danlarkin.json :as json])
+ (:require [clj-yaml.core :as yaml])
  (:use [clojure.contrib.string :only [split join upper-case lower-case trim blank?]])
  (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp))
  (:import (java.io.ByteArrayInputStream))
@@ -24,7 +25,7 @@
    (str output))
   (catch Exception e (.printStackTrace e) nil)))
 
-(defn interpret-task-list [qstat-output] "Returns vector of hashes - PBS's tasks"
+(defn interpret-task-list [qstat-output] "Returns vector of maps - PBS's tasks"
     (comment #_"
     Job Id: 89.server-2
     Job_Name = mpiwc
@@ -84,7 +85,7 @@
 	 session (:session state)
 	 tasklist (ssh-execute session "qstat -f1" nil)
 	 ]                                                     
-	 (println (json/encode (interpret-task-list tasklist)))
+	 (println (yaml/generate-string (interpret-task-list tasklist)))
 	 ))
       (:tasks @state-agent)
       ))
