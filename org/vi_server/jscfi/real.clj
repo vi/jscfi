@@ -130,6 +130,24 @@
     (rj-method alter-task (task) (println "Task altered") (assoc state :tasks (persist-tasks session (assoc tasks (:id task) task))))
     (rj-method remove-task (task-id) (println "Task removed") (assoc state :tasks (persist-tasks session (dissoc tasks task-id))))
 
+    (rj-method compile-task (task-id) 
+     (println "Compile task") 
+     (let [task (get tasks task-id)]
+      (let [sftp (.openChannel session "sftp")]
+       (.connect sftp 3000)
+       (.put sftp (:source-file task) "jscfi/source.c" ChannelSftp/OVERWRITE)
+       (.disconnect sftp))
+      (println "Source code uploaded")
+      (let [
+       compilation-result (ssh-execute session "cd jscfi && rm -f program && mpicc source.c -o program 2>&1; echo $? > ret" nil)
+       compilation-ok (ssh-execute session "cat jscfi/ret" nil)
+       ]
+       (if 
+	(not= compilation-ok "0")
+        (do (compilation-failed observer task compilation-result) state)
+        (assoc state :tasks (persist-tasks (assoc tasks (:id task) (-> task (assoc :status :compiled))))))
+     )))
+
     (rj-method set-observer (observer_) (assoc state :observer observer_))
     (connect [this auth-observer address username]
 	(send state-agent (fn[state]
