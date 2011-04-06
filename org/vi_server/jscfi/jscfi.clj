@@ -6,10 +6,9 @@
 
 (defprotocol JscfiObserver
     "Callbacks from Jscfi object"
-    (connection-status-changed [this])
-    (task-status-changed [this task])
     (compilation-failed [this task text])
     (connected [this]) ; dup from auth-observer's auth-succeed
+    (something-changed [this])
 )
 
 (defprotocol AuthObserver
@@ -29,7 +28,8 @@
     (^clojure.lang.PersistentVector get-tasks [this])
     
     (connect [this auth-observer address user])
-    (set-observer [this observer])
+    (add-observer [this observer])
+    (remove-observer [this observer])
     
     ;; The task lifecycle:
     ;; 1. The task is created (and may be registered in Jscfi): register-task

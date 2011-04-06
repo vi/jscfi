@@ -41,8 +41,17 @@
  (if (empty? source) {}
   (deserialise source)))
 
-(defn persist-tasks [session tasks]
+(defn emit-impl[observers closure]
+ (doall (map (fn[observer]
+    (try
+	(closure observer)	
+    (catch Exception e (println "Observe exception: " e)))) observers)))
+(defmacro emit [mname & whatever]
+ `(emit-impl ~'observers (fn[~'observer11] (~mname ~'observer11 ~@whatever))))
+
+(defn persist-tasks [session observers tasks]
     (ssh-execute session "mkdir -p jscfi && cd jscfi && cat > tasks.clj" (serialise tasks))
+    (emit something-changed)
     tasks
 )
 
@@ -107,7 +116,7 @@
       (fn[~'state] ;; does not need to be hygienic
        (let[
 	~'tasks (:tasks ~'state)
-	~'observer (:observer ~'state)
+	~'observers (:observers ~'state)
 	~'auth-observer (:auth-observer ~'state)
 	~'connected (:connected ~'state)
 	~'session (:session ~'state)
@@ -122,7 +131,8 @@
  (> (apply + (map (fn[task] (if (= (:status task) :scheduled) 1 0)) (vals tasks))) 0))
 
 (defmacro newtasks [tt] "For use inside rj-method"
- `(assoc ~'state :tasks (persist-tasks ~'session ~tt)))
+ `(assoc ~'state :tasks (persist-tasks ~'session ~'observers ~tt)))
+
 
 (expand-first #{rj-method} 
  (deftype RealJscfi [state-agent] Jscfi
@@ -152,7 +162,7 @@
     (get-tasks [this] (vals (:tasks @state-agent)) )
     (get-task [this id] (get (:tasks @state-agent) id) )
     (register-task [this task] (println "Task registered") (println task) (let [rnd-id (.toString (rand))] 
-	(send state-agent #(assoc % :tasks (persist-tasks (:session %) (assoc (:tasks %) rnd-id 
+	(send state-agent #(assoc % :tasks (persist-tasks (:session %) (:observers %) (assoc (:tasks %) rnd-id 
 	    (-> task (assoc :id rnd-id) (assoc :status :created))))))
 	rnd-id))
     (rj-method alter-task (task) (println "Task altered") (newtasks (assoc tasks (:id task) task)))
@@ -173,7 +183,7 @@
        (println "Compilation:" compilation-ok)
        (if 
 	(not= compilation-ok "0")
-        (do (compilation-failed observer task compilation-result) state)
+        (do (emit compilation-failed task compilation-result) state)
         (newtasks (assoc tasks (:id task) (-> task (assoc :status :compiled)))))
      )))
 
@@ -198,7 +208,7 @@ mpirun --hostfile ~/jscfi/pbs-nodes prog 2> stderr > stdout"
        (println "Schedule id:" schedule-result)
        (if 
 	(= schedule-result "")
-        (do (compilation-failed observer task schedule-result) state)
+        (do (emit compilation-failed task schedule-result) state)
         (newtasks (assoc tasks (:id task)
 	    (-> task (assoc :status :scheduled) (assoc :pbs-id schedule-result)))))
      )))
@@ -221,7 +231,8 @@ mpirun --hostfile ~/jscfi/pbs-nodes prog 2> stderr > stdout"
        (.disconnect sftp))
       (println "Output file downloaded")) state)
 
-    (rj-method set-observer (observer_) (assoc state :observer observer_))
+    (rj-method add-observer (observer_) (assoc state :observers (conj observers observer_)))
+    (rj-method remove-observer (observer_) (assoc state :observers (disj observers observer_)))
     (connect [this auth-observer address username]
 	(send state-agent (fn[state]
 	;(do (let [state @state-agent]
@@ -253,9 +264,11 @@ mpirun --hostfile ~/jscfi/pbs-nodes prog 2> stderr > stdout"
 	     (.connect session 3000)
 	     (connection-stage auth-observer (format "Connected to %s@%s" username address))
 	     (auth-succeed auth-observer)
-	     (connected (:observer state))
+	     (emit-impl (:observers state) #(connected %))
 	     (let [tasks (interpret-tasks 
 		 (ssh-execute session "mkdir -p jscfi && cd jscfi && touch tasks.clj && cat tasks.clj" nil))]
+	      ;; pend for execution after returning
+	      (send state-agent (fn[x] (emit-impl (:observers state) #(something-changed %)) x)) 
 	      (-> state 
 	       (assoc :connected true) 
 	       (assoc :auth-observer auth-observer) 
@@ -272,7 +285,7 @@ mpirun --hostfile ~/jscfi/pbs-nodes prog 2> stderr > stdout"
 
 
 (defn get-real-jscfi [] (new RealJscfi (agent {
-    :observer nil,
+    :observers #{},
     :auth-observer nil,
     :tasks {},
     :connected false

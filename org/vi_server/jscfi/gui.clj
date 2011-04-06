@@ -167,11 +167,6 @@
  (let [
   panel (JPanel. (MigLayout. "", "[grow][pref][pref]", "[pref][grow]"))
   frame (JFrame.)
-  observer (reify JscfiObserver 
-      (connected [this] (.setVisible frame true))
-      (compilation-failed [this task message] (javax.swing.JOptionPane/showMessageDialog nil 
-				message (:name task) javax.swing.JOptionPane/INFORMATION_MESSAGE))
-      )
   text-field (JTextField.)
   list-model (DefaultListModel.)
   jlist (JList. list-model)
@@ -194,6 +189,12 @@
   menubar (JMenuBar.)
   view-menu (JMenu. "File")
   action-menu (JMenu. "Action")
+  observer (reify JscfiObserver 
+      (connected [this] (.setVisible frame true))
+      (compilation-failed [this task message] (javax.swing.JOptionPane/showMessageDialog nil 
+				message (:name task) javax.swing.JOptionPane/INFORMATION_MESSAGE))
+      (something-changed [this] (SwingUtilities/invokeLater (fn [](.actionPerformed action-refresh nil))))
+  )
   ]
   (doto frame 
    (.setSize 600 400)
@@ -214,9 +215,8 @@
   (doto menubar
    (.add view-menu)
    (.add action-menu))                
-  (set-observer jscfi observer)
+  (add-observer jscfi observer)
   (.setVisible (create-authentication-window jscfi) true)
-  (.actionPerformed action-refresh nil) 
   (.addMouseListener jlist (proxy [MouseAdapter] [] (mouseClicked [event] (when (= (.getClickCount event) 2) (.actionPerformed action-open nil)))))
   (.addWindowListener frame (proxy [WindowAdapter] [] (windowClosing [_] (comment "There was password delivery here") (System/exit 0))))
   (let [task (proxy [TimerTask] []
