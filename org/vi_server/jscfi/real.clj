@@ -1,6 +1,7 @@
 (ns org.vi-server.jscfi.real
  "Real Jscfi that interacts with with SSH"
  (:use clojure.walk)
+ (:use [clojure.set :only [difference intersection]])
  (:use org.vi-server.jscfi.jscfi)
  (:use [clojure.contrib.string :only [split join upper-case lower-case trim blank?]])
  (:use [clojure.contrib.str-utils :only [chomp]])
@@ -116,12 +117,33 @@
 	 (catch Exception ~'e (.printStackTrace ~'e) (println "Exception:" ~'e) ~'state)))))
      nil))
 
+
+(defn exists-scheduled-tasks [tasks] 
+ (> (apply + (map (fn[task] (if (= (:status task) :scheduled) 1 0)) (vals tasks))) 0))
+
+(defmacro newtasks [tt] "For use inside rj-method"
+ `(assoc state :tasks (persist-tasks session ~tt)))
+
 (expand-first #{rj-method} 
  (deftype RealJscfi [state-agent] Jscfi
     (rj-method periodic-update ()
-      (when connected
-	(let [tasklist (ssh-execute session "qstat -f1" nil)]                                                     
-	 (println (interpret-task-list tasklist))))
+      (println tasks)
+      (when (and connected (exists-scheduled-tasks tasks))
+	(let [
+	 tasklist (ssh-execute session "qstat -f1" nil)
+	 qstat (interpret-task-list tasklist)
+	 ]
+	 (println "Periodic qstat")
+	 (let [
+	  v1 (reduce (fn[col task] (if (:pbs-id task) (assoc col (:pbs-id task) (:id task)) col)) {} (vals tasks))
+	  v2 (map (fn[x] (:job-id x)) qstat)
+	  v3 (difference (set (keys v1)) (set v2)) #_"When the task disappears from qstat it means it's completed"
+	  v4 (set (map #(get v1 %) v3))
+	  newtasks (reduce (fn[col tid] (assoc col tid (assoc (get tasks tid) :status :completed))) tasks v4)
+	  ]
+	  (println newtasks)
+	  )
+	 ))
       state)
 
     (get-tasks [this] (vals (:tasks @state-agent)) )
@@ -175,7 +197,7 @@ mpirun --hostfile ~/jscfi/pbs-nodes prog 2> stderr > stdout"
 	(= schedule-result "")
         (do (compilation-failed observer task schedule-result) state)
         (assoc state :tasks (persist-tasks session (assoc tasks (:id task) 
-	    (-> task (assoc :status :scheduled) (assoc :pbd-id schedule-result))))))
+	    (-> task (assoc :status :scheduled) (assoc :pbs-id schedule-result))))))
      )))
 
     (rj-method upload-task (task-id) 
