@@ -1,9 +1,10 @@
 (ns org.vi-server.jscfi.real
  "Real Jscfi that interacts with with SSH"
+ (:use clojure.walk)
  (:use org.vi-server.jscfi.jscfi)
+ (:use [clojure.contrib.string :only [split join upper-case lower-case trim blank?]])
  ;(:require [org.danlarkin.json :as json])
  (:require [clj-yaml.core :as yaml])
- (:use [clojure.contrib.string :only [split join upper-case lower-case trim blank?]])
  (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp))
  (:import (java.io.ByteArrayInputStream))
  )  
@@ -77,8 +78,24 @@
 	)
 	) taskwise)))
 
-(deftype RealJscfi [state-agent] Jscfi
-    (get-tasks [this] 
+(defmacro expand-first [the-set & code] `(do ~@(prewalk #(if (and (list? %) (contains? the-set (first %))) (macroexpand-all %) %) code)))
+
+
+(defmacro ^{:private true} rj-method [name add-args & new-state] 
+ `(~name  [~'this ~@add-args] 
+     (send ~'state-agent 
+      (fn[~'state] ;; does not need to be hygienic
+       (let[
+	~'tasks (:tasks ~'state)
+	~'observer (:observer ~'state)
+	~'auth-observer (:auth-observer ~'state)
+	~'connected (:connected ~'state)
+	] 
+	~@new-state)))
+     nil))
+
+(expand-first #{rj-method} (deftype RealJscfi [state-agent] Jscfi
+    (periodic-update [this] 
      (let [state @state-agent]
       (when (:connected state)
 	(let [
@@ -87,9 +104,12 @@
 	 ]                                                     
 	 (println (yaml/generate-string (interpret-task-list tasklist)))
 	 ))
-      (:tasks @state-agent)
       ))
-    (get-task [this id] (loop [t (:tasks @state-agent)] (if (= (:id (first t)) id) (first t) (if (empty? t) nil (recur (next t) )))))
+
+    (get-tasks [this] (vals (:tasks @state-agent)) )
+    (get-task [this id] (id (:tasks @state-agent)) )
+    (rj-method register-task (task) (let [rnd-id (.toString (rand))] (assoc state :tasks (assoc tasks rnd-id (assoc task :id rnd-id)))))
+
     (set-observer [this observer]
      (send state-agent (fn[state]
 	     (-> state (assoc :observer observer)))))     
@@ -132,9 +152,14 @@
 	      (connection-stage auth-observer (.toString e))
 	      state)
 	    )))))
+))
 
-)
 
-
-(defn get-real-jscfi [] (new RealJscfi (agent {:observer nil, :auth-observer nil, :tasks [], :connected false})))
+(defn get-real-jscfi [] (new RealJscfi (agent {
+    :observer nil,
+    :auth-observer nil,
+    :tasks {},
+    :taskmap {}, ;; map from PBS task id to internal task id
+    :connected false
+    })))
 

@@ -159,6 +159,9 @@
 	  (.clear list-model)
 	  (doall (map #(.add list-model 0 (TaskListEntryImpl. %)) (get-tasks jscfi))))
       { Action/SHORT_DESCRIPTION  "Refresh the list of tasks", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_R Event/CTRL_MASK) })
+  action-update (create-action "Update" (fn [_] 
+	  (periodic-update jscfi))
+      { Action/SHORT_DESCRIPTION  "Run qstat to update things", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_U Event/CTRL_MASK) })
   action-open (create-action "Open" 
       (fn [_] 
        (let [index (.getSelectedIndex jlist)] 
@@ -183,6 +186,7 @@
    (.add (JScrollPane. jlist) "grow,span 3")
    (.revalidate))
   (.add view-menu    action-refresh)
+  (.add view-menu    action-update)
   (.add view-menu    action-open)
   (.add action-menu    action-create)
   (doto menubar
