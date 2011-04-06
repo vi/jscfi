@@ -132,7 +132,7 @@
        (doto frame (.setVisible false) (.dispose))
        )
       (auth-failed [this] (javax.swing.JOptionPane/showMessageDialog nil 
-			   "Authentication failed" "jscfi" javax.swing.JOptionPane/INFORMATION_MESSAGE))
+			   "Login failed" "jscfi" javax.swing.JOptionPane/INFORMATION_MESSAGE))
       (connection-stage [this msg] (SwingUtilities/invokeLater (fn [](.setText connstage-label msg))))
       )
   action-connect (create-action "Connect" (fn [_] 
