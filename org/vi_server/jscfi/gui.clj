@@ -29,7 +29,7 @@
   frame (JFrame.)
   name-field        (JTextField.   (:name task))
   status-field      (JLabel.       (str (:status task)))
-  outer-id-field     (JLabel.       (:outer-id task))
+  outer-id-field    (JLabel.       (:pbs-id task))
   source-file-field (JTextField.   (:source-file task))
   input-file-field  (JTextField.   (:input-file task))
   output-file-field (JTextField.   (:output-file task))
