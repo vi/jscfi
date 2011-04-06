@@ -110,7 +110,9 @@
 	~'connected (:connected ~'state)
 	~'session (:session ~'state)
 	] 
-	~@new-state)))
+	(try
+	 ~@new-state
+	 (catch Exception ~'e (.printStackTrace ~'e) (println "Exception:" ~'e) ~'state)))))
      nil))
 
 (expand-first #{rj-method} 
@@ -139,13 +141,14 @@
        (.disconnect sftp))
       (println "Source code uploaded")
       (let [
-       compilation-result (ssh-execute session "cd jscfi && rm -f program && mpicc source.c -o program 2>&1; echo $? > ret" nil)
+       compilation-result (ssh-execute session "cd jscfi && rm -f program && mpicc source.c -o program 2>&1; echo -n $? > ret" nil)
        compilation-ok (ssh-execute session "cat jscfi/ret" nil)
        ]
+       (println "Compilation:" compilation-ok)
        (if 
 	(not= compilation-ok "0")
         (do (compilation-failed observer task compilation-result) state)
-        (assoc state :tasks (persist-tasks (assoc tasks (:id task) (-> task (assoc :status :compiled))))))
+        (assoc state :tasks (persist-tasks session (assoc tasks (:id task) (-> task (assoc :status :compiled))))))
      )))
 
     (rj-method set-observer (observer_) (assoc state :observer observer_))

@@ -168,6 +168,8 @@
   frame (JFrame.)
   observer (reify JscfiObserver 
       (connected [this] (.setVisible frame true))
+      (compilation-failed [this task message] (javax.swing.JOptionPane/showMessageDialog nil 
+				message (:name task) javax.swing.JOptionPane/INFORMATION_MESSAGE))
       )
   text-field (JTextField.)
   list-model (DefaultListModel.)
