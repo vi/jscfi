@@ -135,13 +135,19 @@
 	 ]
 	 (println "Periodic qstat")
 	 (let [
-	  v1 (reduce (fn[col task] (if (:pbs-id task) (assoc col (:pbs-id task) (:id task)) col)) {} (vals tasks))
-	  v2 (map (fn[x] (:job-id x)) qstat)
-	  v3 (difference (set (keys v1)) (set v2)) #_"When the task disappears from qstat it means it's completed"
-	  v4 (set (map #(get v1 %) v3))
-	  newtasks (reduce (fn[col tid] (assoc col tid (assoc (get tasks tid) :status :completed))) tasks v4)
+	  pbs-id-to-task-id-map (reduce (fn[col task] 
+		(if (:pbs-id task) (assoc col (:pbs-id task) (:id task)) col)) {} (vals tasks))
+	  pbs-ids-still-present-in-qstat (map (fn[x] (:job-id x)) qstat)
+
+	  #_"When the task disappears from qstat it means it's completed" 
+	  completed-pbs-ids (difference (set (keys pbs-id-to-task-id-map)) (set pbs-ids-still-present-in-qstat)) 
+	  completed-task-ids (set (map #(get pbs-id-to-task-id-map %) completed-pbs-ids))
+
+	  tasks-new (reduce (fn[col tid] 
+	    (assoc col tid (assoc (get tasks tid) :status :completed))) tasks completed-task-ids)
 	  ]
-	  (println newtasks)
+	  (print "Completed tasks:" completed-task-ids)
+	  (newtasks tasks-new)
 	  )
 	 ))
       state)
