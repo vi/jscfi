@@ -104,8 +104,12 @@
       state)
 
     (get-tasks [this] (vals (:tasks @state-agent)) )
-    (get-task [this id] (id (:tasks @state-agent)) )
-    (rj-method register-task (task) (let [rnd-id (.toString (rand))] (assoc state :tasks (assoc tasks rnd-id (assoc task :id rnd-id)))))
+    (get-task [this id] (get (:tasks @state-agent) id) )
+    (register-task [this task] (println "Task registered") (println task) (let [rnd-id (.toString (rand))] 
+	(send state-agent #(assoc % :tasks (assoc (:tasks %) rnd-id 
+	    (-> task (assoc :id rnd-id) (assoc :status :created)))))
+	rnd-id))
+    (rj-method alter-task (task) (println "Task altered") (assoc state :tasks (assoc tasks (:id task) task)))
 
     (rj-method set-observer (observer_) (assoc state :observer observer_))
     (connect [this auth-observer address username]

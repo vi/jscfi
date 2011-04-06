@@ -41,7 +41,8 @@
     ;; 6. The output file is downloaded from SCFI: download-task
     ;; 7. Source code, executable, input and output files and other things are cleared from SCFI: clear-task
 
-    (register-task [this task-id])
+    (^String register-task [this task])
+    (^String alter-task [this task])
     (compile-task [this task-id])
     (upload-task [this task-id])
     (schedule-task [this task-id])

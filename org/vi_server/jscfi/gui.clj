@@ -33,16 +33,23 @@
   input-file-field  (JTextField.   (:input-file task))
   output-file-field (JTextField.   (:output-file task))
   node-count-field  (JTextField.   (str (:node-count task)))
+  task-id (atom (:id task))
   action-display (create-action "Debug Print" (fn [_] (prn task))
       { Action/SHORT_DESCRIPTION  "Display it", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) })
-  action-create (create-action "Create" (fn [_] (register-task jscfi {
-	      :name           (.getText name-field)
-	      :status         :created
-	      :source-file    (.getText source-file-field)
-	      :input-file     (.getText input-file-field)
-	      :output-file    (.getText output-file-field)
-	      :node-count     (.getText node-count-field)}))
-      { Action/SHORT_DESCRIPTION  "Create a task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_ENTER Event/CTRL_MASK) })
+  action-create (create-action "Create/Change" (fn [_] 
+	  (let [
+	   task (if @task-id (get-task jscfi @task-id) {})
+           newtask (-> task
+	      (assoc :name           (.getText name-field))
+	      (assoc :source-file    (.getText source-file-field))
+	      (assoc :input-file     (.getText input-file-field))
+	      (assoc :output-file    (.getText output-file-field))
+	      (assoc :node-count     (.getText node-count-field))
+	      )]
+	   (if @task-id
+	    (alter-task jscfi newtask)
+	    (swap! task-id (fn[_](register-task jscfi newtask))))))
+      { Action/SHORT_DESCRIPTION  "Create/change a task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_ENTER Event/CTRL_MASK) })
   button-panel (JPanel. (MigLayout. "", "[pref]", "[grow]5"))
   ]
   (doto frame 
