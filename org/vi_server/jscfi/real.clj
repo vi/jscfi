@@ -122,7 +122,7 @@
  (> (apply + (map (fn[task] (if (= (:status task) :scheduled) 1 0)) (vals tasks))) 0))
 
 (defmacro newtasks [tt] "For use inside rj-method"
- `(assoc state :tasks (persist-tasks session ~tt)))
+ `(assoc ~'state :tasks (persist-tasks ~'session ~tt)))
 
 (expand-first #{rj-method} 
  (deftype RealJscfi [state-agent] Jscfi
@@ -152,8 +152,8 @@
 	(send state-agent #(assoc % :tasks (persist-tasks (:session %) (assoc (:tasks %) rnd-id 
 	    (-> task (assoc :id rnd-id) (assoc :status :created))))))
 	rnd-id))
-    (rj-method alter-task (task) (println "Task altered") (assoc state :tasks (persist-tasks session (assoc tasks (:id task) task))))
-    (rj-method remove-task (task-id) (println "Task removed") (assoc state :tasks (persist-tasks session (dissoc tasks task-id))))
+    (rj-method alter-task (task) (println "Task altered") (newtasks (assoc tasks (:id task) task)))
+    (rj-method remove-task (task-id) (println "Task removed") (newtasks (dissoc tasks task-id)))
 
     (rj-method compile-task (task-id) 
      (println "Compile task") 
@@ -171,7 +171,7 @@
        (if 
 	(not= compilation-ok "0")
         (do (compilation-failed observer task compilation-result) state)
-        (assoc state :tasks (persist-tasks session (assoc tasks (:id task) (-> task (assoc :status :compiled))))))
+        (newtasks (assoc tasks (:id task) (-> task (assoc :status :compiled)))))
      )))
 
     (rj-method schedule-task (task-id) 
@@ -196,8 +196,8 @@ mpirun --hostfile ~/jscfi/pbs-nodes prog 2> stderr > stdout"
        (if 
 	(= schedule-result "")
         (do (compilation-failed observer task schedule-result) state)
-        (assoc state :tasks (persist-tasks session (assoc tasks (:id task) 
-	    (-> task (assoc :status :scheduled) (assoc :pbs-id schedule-result))))))
+        (newtasks (assoc tasks (:id task)
+	    (-> task (assoc :status :scheduled) (assoc :pbs-id schedule-result)))))
      )))
 
     (rj-method upload-task (task-id) 
