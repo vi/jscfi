@@ -9,22 +9,35 @@
  (:import (java.io.ByteArrayInputStream))
  )  
 
-(defn ^String ssh-execute [session command input]
+(defn ^String ssh-execute [session command input-str]
+ (println "ssh-execute" command)
  (try
   (let [
    channel (.openChannel session "exec")
    output (java.io.ByteArrayOutputStream.)
-   input (if input (java.io.ByteArrayOutputStream. (.getBytes input)) nil)
+   input (if input-str (java.io.ByteArrayInputStream. (.getBytes input-str)) nil)
    ]
+   (println "ssh-execute stage 2")
    (doto channel
     (.setOutputStream output)
     (.setExtOutputStream System/err)
     (.setInputStream input)
     (.setCommand command)
     (.connect 3000))
+   (println "ssh-execute progress")
    (while (not (.isClosed channel)) (Thread/sleep 100))
+   (println "ssh-execute finished")
    (str output))
-  (catch Exception e (.printStackTrace e) nil)))
+  (catch Exception e (.printStackTrace e) (println "ssh-execute fail" e) nil)))
+
+(defn interpret-tasks [^String source] 
+ (if (empty? source) {}
+  (yaml/parse-string source)))
+
+(defn persist-tasks [session tasks]
+    (ssh-execute session "mkdir -p jscfi && cd jscfi && cat > tasks.yaml" (yaml/generate-string tasks))
+    tasks
+)
 
 (defn interpret-task-list [qstat-output] "Returns vector of maps - PBS's tasks"
     (comment #_"
@@ -106,11 +119,11 @@
     (get-tasks [this] (vals (:tasks @state-agent)) )
     (get-task [this id] (get (:tasks @state-agent) id) )
     (register-task [this task] (println "Task registered") (println task) (let [rnd-id (.toString (rand))] 
-	(send state-agent #(assoc % :tasks (assoc (:tasks %) rnd-id 
-	    (-> task (assoc :id rnd-id) (assoc :status :created)))))
+	(send state-agent #(assoc % :tasks (persist-tasks (:session %) (assoc (:tasks %) rnd-id 
+	    (-> task (assoc :id rnd-id) (assoc :status :created))))))
 	rnd-id))
-    (rj-method alter-task (task) (println "Task altered") (assoc state :tasks (assoc tasks (:id task) task)))
-    (rj-method remove-task (task-id) (println "Task removed") (assoc state :tasks (dissoc tasks task-id)))
+    (rj-method alter-task (task) (println "Task altered") (assoc state :tasks (persist-tasks session (assoc tasks (:id task) task))))
+    (rj-method remove-task (task-id) (println "Task removed") (assoc state :tasks (persist-tasks session (dissoc tasks task-id))))
 
     (rj-method set-observer (observer_) (assoc state :observer observer_))
     (connect [this auth-observer address username]
@@ -145,7 +158,14 @@
 	     (connection-stage auth-observer (format "Connected to %s@%s" username address))
 	     (auth-succeed auth-observer)
 	     (connected (:observer state))
-	     (-> state (assoc :connected true) (assoc :auth-observer auth-observer) (assoc :session session))
+	     (let [tasks (interpret-tasks 
+		 (ssh-execute session "mkdir -p jscfi && cd jscfi && touch tasks.yaml && cat tasks.yaml" nil))]
+	      (-> state 
+	       (assoc :connected true) 
+	       (assoc :auth-observer auth-observer) 
+	       (assoc :session session)
+	       (assoc :tasks tasks)
+	      ))
 	     (catch Exception e 
 	      (.printStackTrace e)
 	      (auth-failed auth-observer)
@@ -159,7 +179,6 @@
     :observer nil,
     :auth-observer nil,
     :tasks {},
-    :taskmap {}, ;; map from PBS task id to internal task id
     :connected false
     })))
 
