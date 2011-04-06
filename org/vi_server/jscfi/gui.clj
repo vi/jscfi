@@ -7,7 +7,8 @@
      (javax.swing JMenu JMenuBar JPasswordField)
      (java.awt.event KeyEvent MouseAdapter WindowAdapter)
      (java.awt Event)
-     (net.miginfocom.swing MigLayout)))      
+     (net.miginfocom.swing MigLayout))
+    (:import (java.util TimerTask Timer)))
 
 (defn create-action "Creates an implementation of AbstractAction." [name behavior options]
  (let [
@@ -217,6 +218,9 @@
   (.setVisible (create-authentication-window jscfi) true)
   (.actionPerformed action-refresh nil) 
   (.addMouseListener jlist (proxy [MouseAdapter] [] (mouseClicked [event] (when (= (.getClickCount event) 2) (.actionPerformed action-open nil)))))
+  (let [task (proxy [TimerTask] []
+      	(run [] (periodic-update jscfi)))]
+   (. (new Timer) (schedule task (long 3000) (long 5000))))
   frame))
 
 (defn main []
