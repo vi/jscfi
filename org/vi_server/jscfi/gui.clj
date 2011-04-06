@@ -63,11 +63,25 @@
   action-download (create-action "Download" (fn [_] (download-task jscfi @task-id))
       { Action/SHORT_DESCRIPTION  "Download output.txt", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_D Event/CTRL_MASK) })
   button-panel (JPanel. (MigLayout. "", "[pref][pref]", "[grow]5"))
+  observer (reify JscfiObserver 
+      (something-changed [this] (SwingUtilities/invokeLater (fn []
+	(let [task (get-task jscfi @task-id)]
+	 (try
+          (.setText name-field         (str (:name task)))
+	  (.setText status-field       (str (:status task))) 
+          (.setText outer-id-field     (str (:pbs-id task))) 
+          (.setText source-file-field  (str (:source-file task)))
+          (.setText input-file-field   (str (:input-file task))) 
+          (.setText output-file-field  (str (:output-file task))) 
+          (.setText node-count-field   (str (:node-count task)))
+	  (catch Exception e (println e)))
+	  )))))
   ]
   (doto frame 
    (.setSize 600 340)
    (.setContentPane panel)
    (.setTitle "Jscfi task")
+   (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (remove-observer jscfi observer))))
    )
   (doto button-panel
    (.add (JButton. action-display) "growx")
@@ -89,6 +103,7 @@
    (.add button-panel "span 2")
    (.revalidate))
   (.setLocationRelativeTo frame nil)
+  (add-observer jscfi observer)
   frame))
 
 
