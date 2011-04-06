@@ -34,7 +34,7 @@
   output-file-field (JTextField.   (:output-file task))
   node-count-field  (JTextField.   (str (:node-count task)))
   task-id (atom (:id task))
-  action-display (create-action "Debug Print" (fn [_] (prn task))
+  action-display (create-action "Debug Print" (fn [_] (prn (get-task jscfi @task-id)))
       { Action/SHORT_DESCRIPTION  "Display it", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) })
   action-create (create-action "Create/Change" (fn [_] 
 	  (let [
@@ -50,10 +50,13 @@
 	    (alter-task jscfi newtask)
 	    (swap! task-id (fn[_](register-task jscfi newtask))))))
       { Action/SHORT_DESCRIPTION  "Create/change a task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_ENTER Event/CTRL_MASK) })
-  button-panel (JPanel. (MigLayout. "", "[pref]", "[grow]5"))
+
+  action-remove (create-action "Remove" (fn [_] (remove-task jscfi @task-id) (swap! task-id (fn[_]nil)))
+      { Action/SHORT_DESCRIPTION  "Remove the task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_D Event/CTRL_MASK) })
+  button-panel (JPanel. (MigLayout. "", "[pref][pref]", "[grow]5"))
   ]
   (doto frame 
-   (.setSize 600 300)
+   (.setSize 600 340)
    (.setContentPane panel)
    (.setTitle "Jscfi task")
    )
@@ -61,9 +64,10 @@
    (.add (JButton. action-display) "growx")
    (.add (JButton. action-create) "growx")
    (.add (JButton. "compile") "growx")
-   (.add (JButton. "upload") "growx")
+   (.add (JButton. "upload") "growx,wrap")
    (.add (JButton. "schedule") "growx")
    (.add (JButton. "download") "growx")
+   (.add (JButton. action-remove) "growx")
    (.revalidate))
   (doto panel
    (.add (JLabel. "Name:"))          (.add name-field         "growx,wrap")

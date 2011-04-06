@@ -110,6 +110,7 @@
 	    (-> task (assoc :id rnd-id) (assoc :status :created)))))
 	rnd-id))
     (rj-method alter-task (task) (println "Task altered") (assoc state :tasks (assoc tasks (:id task) task)))
+    (rj-method remove-task (task-id) (println "Task removed") (assoc state :tasks (dissoc tasks task-id)))
 
     (rj-method set-observer (observer_) (assoc state :observer observer_))
     (connect [this auth-observer address username]

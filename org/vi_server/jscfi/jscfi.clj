@@ -43,6 +43,7 @@
 
     (^String register-task [this task])
     (^String alter-task [this task])
+    (remove-task [this task-id])
     (compile-task [this task-id])
     (upload-task [this task-id])
     (schedule-task [this task-id])
