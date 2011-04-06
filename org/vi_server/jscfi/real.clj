@@ -5,7 +5,7 @@
  (:use [clojure.contrib.string :only [split join upper-case lower-case trim blank?]])
  (:use [clojure.contrib.str-utils :only [chomp]])
  ;(:require [org.danlarkin.json :as json])
- (:require [clj-yaml.core :as yaml])
+ ;(:require [clj-yaml.core :as yaml])
  (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp))
  (:import (java.io.ByteArrayInputStream))
  )  
@@ -121,7 +121,7 @@
     (rj-method periodic-update ()
       (when connected
 	(let [tasklist (ssh-execute session "qstat -f1" nil)]                                                     
-	 (println (yaml/generate-string (interpret-task-list tasklist)))))
+	 (println (interpret-task-list tasklist))))
       state)
 
     (get-tasks [this] (vals (:tasks @state-agent)) )
