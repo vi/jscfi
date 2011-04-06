@@ -53,6 +53,14 @@
 
   action-remove (create-action "Remove" (fn [_] (remove-task jscfi @task-id) (swap! task-id (fn[_]nil)))
       { Action/SHORT_DESCRIPTION  "Remove the task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_D Event/CTRL_MASK) })
+  action-compile (create-action "Compile" (fn [_] (compile-task jscfi @task-id))
+      { Action/SHORT_DESCRIPTION  "Upload the source code and compile the task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) })
+  action-upload (create-action "Upload" (fn [_] (upload-task jscfi @task-id))
+      { Action/SHORT_DESCRIPTION  "Upload the input data as input.txt", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_U Event/CTRL_MASK) })
+  action-schedule (create-action "Schedule" (fn [_] (schedule-task jscfi @task-id))
+      { Action/SHORT_DESCRIPTION  "Schedule the task for execution", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_F Event/CTRL_MASK) })
+  action-download (create-action "Download" (fn [_] (download-task jscfi @task-id))
+      { Action/SHORT_DESCRIPTION  "Download output.txt", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_D Event/CTRL_MASK) })
   button-panel (JPanel. (MigLayout. "", "[pref][pref]", "[grow]5"))
   ]
   (doto frame 
@@ -63,10 +71,10 @@
   (doto button-panel
    (.add (JButton. action-display) "growx")
    (.add (JButton. action-create) "growx")
-   (.add (JButton. "compile") "growx")
-   (.add (JButton. "upload") "growx,wrap")
-   (.add (JButton. "schedule") "growx")
-   (.add (JButton. "download") "growx")
+   (.add (JButton. action-compile) "growx")
+   (.add (JButton. action-upload) "growx,wrap")
+   (.add (JButton. action-schedule) "growx")
+   (.add (JButton. action-download) "growx")
    (.add (JButton. action-remove) "growx")
    (.revalidate))
   (doto panel
