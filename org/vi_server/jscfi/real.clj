@@ -127,8 +127,7 @@
 (expand-first #{rj-method} 
  (deftype RealJscfi [state-agent] Jscfi
     (rj-method periodic-update ()
-      (println tasks)
-      (when (and connected (exists-scheduled-tasks tasks))
+      (if (and connected (exists-scheduled-tasks tasks))
 	(let [
 	 tasklist (ssh-execute session "qstat -f1" nil)
 	 qstat (interpret-task-list tasklist)
@@ -146,11 +145,9 @@
 	  tasks-new (reduce (fn[col tid] 
 	    (assoc col tid (assoc (get tasks tid) :status :completed))) tasks completed-task-ids)
 	  ]
-	  (print "Completed tasks:" completed-task-ids)
-	  (newtasks tasks-new)
-	  )
-	 ))
-      state)
+	  (println "Completed tasks:" completed-task-ids)
+	  (newtasks tasks-new)))
+      state))
 
     (get-tasks [this] (vals (:tasks @state-agent)) )
     (get-task [this id] (get (:tasks @state-agent) id) )
