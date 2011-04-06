@@ -9,6 +9,11 @@
  (:import (java.io.ByteArrayInputStream))
  )  
 
+(defn serialise [object]
+ (binding [*print-dup* true] (with-out-str (prn object))))
+
+(defn deserialise [string] (read-string string))
+
 (defn ^String ssh-execute [session command input-str]
  (println "ssh-execute" command)
  (try
@@ -32,10 +37,10 @@
 
 (defn interpret-tasks [^String source] 
  (if (empty? source) {}
-  (yaml/parse-string source)))
+  (deserialise source)))
 
 (defn persist-tasks [session tasks]
-    (ssh-execute session "mkdir -p jscfi && cd jscfi && cat > tasks.yaml" (yaml/generate-string tasks))
+    (ssh-execute session "mkdir -p jscfi && cd jscfi && cat > tasks.clj" (serialise tasks))
     tasks
 )
 
@@ -159,7 +164,7 @@
 	     (auth-succeed auth-observer)
 	     (connected (:observer state))
 	     (let [tasks (interpret-tasks 
-		 (ssh-execute session "mkdir -p jscfi && cd jscfi && touch tasks.yaml && cat tasks.yaml" nil))]
+		 (ssh-execute session "mkdir -p jscfi && cd jscfi && touch tasks.clj && cat tasks.clj" nil))]
 	      (-> state 
 	       (assoc :connected true) 
 	       (assoc :auth-observer auth-observer) 
