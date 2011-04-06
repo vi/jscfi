@@ -41,15 +41,17 @@
  (if (empty? source) {}
   (deserialise source)))
 
-(defn emit-impl[observers closure]
- (doall (map (fn[observer]
+(defn emit-impl[state-agent closure]
+ (send state-agent (fn[state]
+  (let [observers (:observers state)] 
+   (doall (map (fn[observer]
     (try
 	(closure observer)	
-    (catch Exception e (println "Observe exception: " e)))) observers)))
+    (catch Exception e (println "Observe exception: " e)))) observers))) state)))
 (defmacro emit [mname & whatever]
- `(emit-impl ~'observers (fn[~'observer11] (~mname ~'observer11 ~@whatever))))
+ `(emit-impl ~'state-agent (fn[~'observer11] (~mname ~'observer11 ~@whatever))))
 
-(defn persist-tasks [session observers tasks]
+(defn persist-tasks [session state-agent tasks]
     (ssh-execute session "mkdir -p jscfi && cd jscfi && cat > tasks.clj" (serialise tasks))
     (emit something-changed)
     tasks
@@ -131,7 +133,7 @@
  (> (apply + (map (fn[task] (if (= (:status task) :scheduled) 1 0)) (vals tasks))) 0))
 
 (defmacro newtasks [tt] "For use inside rj-method"
- `(assoc ~'state :tasks (persist-tasks ~'session ~'observers ~tt)))
+ `(assoc ~'state :tasks (persist-tasks ~'session ~'state-agent ~tt)))
 
 
 (expand-first #{rj-method} 
@@ -162,7 +164,7 @@
     (get-tasks [this] (vals (:tasks @state-agent)) )
     (get-task [this id] (get (:tasks @state-agent) id) )
     (register-task [this task] (println "Task registered") (println task) (let [rnd-id (.toString (rand))] 
-	(send state-agent #(assoc % :tasks (persist-tasks (:session %) (:observers %) (assoc (:tasks %) rnd-id 
+	(send state-agent #(assoc % :tasks (persist-tasks (:session %) state-agent (assoc (:tasks %) rnd-id 
 	    (-> task (assoc :id rnd-id) (assoc :status :created))))))
 	rnd-id))
     (rj-method alter-task (task) (println "Task altered") (newtasks (assoc tasks (:id task) task)))
@@ -264,11 +266,10 @@ mpirun --hostfile ~/jscfi/pbs-nodes prog 2> stderr > stdout"
 	     (.connect session 3000)
 	     (connection-stage auth-observer (format "Connected to %s@%s" username address))
 	     (auth-succeed auth-observer)
-	     (emit-impl (:observers state) #(connected %))
+	     (emit-impl state-agent #(connected %))
+	     (emit-impl state-agent #(something-changed %))
 	     (let [tasks (interpret-tasks 
 		 (ssh-execute session "mkdir -p jscfi && cd jscfi && touch tasks.clj && cat tasks.clj" nil))]
-	      ;; pend for execution after returning
-	      (send state-agent (fn[x] (emit-impl (:observers state) #(something-changed %)) x)) 
 	      (-> state 
 	       (assoc :connected true) 
 	       (assoc :auth-observer auth-observer) 
