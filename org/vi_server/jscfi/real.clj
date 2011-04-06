@@ -3,6 +3,7 @@
  (:use clojure.walk)
  (:use org.vi-server.jscfi.jscfi)
  (:use [clojure.contrib.string :only [split join upper-case lower-case trim blank?]])
+ (:use [clojure.contrib.str-utils :only [chomp]])
  ;(:require [org.danlarkin.json :as json])
  (:require [clj-yaml.core :as yaml])
  (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp))
@@ -149,6 +150,32 @@
 	(not= compilation-ok "0")
         (do (compilation-failed observer task compilation-result) state)
         (assoc state :tasks (persist-tasks session (assoc tasks (:id task) (-> task (assoc :status :compiled))))))
+     )))
+
+    (rj-method schedule-task (task-id) 
+     (println "Schedule task") 
+     (let [task (get tasks task-id)]
+      (let [
+       schedule-result (chomp (ssh-execute session 
+	   "cd jscfi && cat > run.pbs && qsub run.pbs" 
+	   (format "#PBS -l walltime=00:00:01
+#PBS -l nodes=%s
+#PBS -N %s
+hostname
+cd ~/jscfi/
+date >> ~/jscfi/log
+hostname >> ~/jscfi/log
+echo \"PBS_O_WORKDIR=$PBS_O_WORKDIR\" >> ~/jscfi/log
+cp $PBS_NODEFILE ~/jscfi/pbs-nodes
+mpirun --hostfile ~/jscfi/pbs-nodes prog 2> stderr > stdout"
+	    (:node-count task) (:name task))))
+       ]
+       (println "Schedule id:" schedule-result)
+       (if 
+	(= schedule-result "")
+        (do (compilation-failed observer task schedule-result) state)
+        (assoc state :tasks (persist-tasks session (assoc tasks (:id task) 
+	    (-> task (assoc :status :scheduled) (assoc :pbd-id schedule-result))))))
      )))
 
     (rj-method upload-task (task-id) 

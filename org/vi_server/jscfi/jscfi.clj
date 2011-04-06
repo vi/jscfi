@@ -1,6 +1,6 @@
 (ns org.vi-server.jscfi.jscfi "Jscfi facade between engine and GUI")
 
-;; task is a map like  {:name "Qqq" :source-file "qqq.c" :input-file "input.txt" :output-file "output.txt" :task-id "server-33" :node-count 4 :status :waiting :id 0.3324234} 
+;; task is a map like  {:name "Qqq" :source-file "qqq.c" :input-file "input.txt" :output-file "output.txt" :pbs-id "server-33" :node-count 4 :status :waiting :id 0.3324234} 
 ;;
 ;; States: :none :compiled :uploaded :error :deletion :hold :running :restarted :suspended :transferring :threshold :waiting :finished :downloaded :cleaned
 
