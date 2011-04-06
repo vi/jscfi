@@ -151,6 +151,24 @@
         (assoc state :tasks (persist-tasks session (assoc tasks (:id task) (-> task (assoc :status :compiled))))))
      )))
 
+    (rj-method upload-task (task-id) 
+     (println "Uploading input file") 
+     (let [task (get tasks task-id)]
+      (let [sftp (.openChannel session "sftp")]
+       (.connect sftp 3000)
+       (.put sftp (:input-file task) "jscfi/input.txt" ChannelSftp/OVERWRITE)
+       (.disconnect sftp))
+      (println "Input file uploaded")) state)
+
+    (rj-method download-task (task-id) 
+     (println "Downloading output file") 
+     (let [task (get tasks task-id)]
+      (let [sftp (.openChannel session "sftp")]
+       (.connect sftp 3000)
+       (.get sftp "jscfi/output.txt" (:output-file task))
+       (.disconnect sftp))
+      (println "Output file downloaded")) state)
+
     (rj-method set-observer (observer_) (assoc state :observer observer_))
     (connect [this auth-observer address username]
 	(send state-agent (fn[state]
