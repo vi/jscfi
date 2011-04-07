@@ -1,0 +1,1 @@
+cd jscfi && cat > run.pbs && qsub run.pbs

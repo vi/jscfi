@@ -1,0 +1,1 @@
+mkdir -p jscfi && cd jscfi && touch tasks.clj && cat tasks.clj

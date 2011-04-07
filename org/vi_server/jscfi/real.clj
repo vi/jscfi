@@ -11,6 +11,10 @@
  (:import (java.io.ByteArrayInputStream))
  )  
 
+(defn read-script [script-name] 
+ (slurp (ClassLoader/getSystemResourceAsStream 
+	 (str "org/vi_server/jscfi/scripts/" script-name))))
+
 (defn serialise [object]
  (binding [*print-dup* true] (with-out-str (prn object))))
 
@@ -52,7 +56,7 @@
  `(emit-impl ~'state-agent (fn[~'observer11] (~mname ~'observer11 ~@whatever))))
 
 (defn persist-tasks [session state-agent tasks]
-    (ssh-execute session "mkdir -p jscfi && cd jscfi && cat > tasks.clj" (serialise tasks))
+    (ssh-execute session (read-script "save-tasks.txt") (serialise tasks))
     (emit something-changed)
     tasks
 )
@@ -141,7 +145,7 @@
     (rj-method periodic-update ()
       (if (and connected (exists-scheduled-tasks tasks))
 	(let [
-	 tasklist (ssh-execute session "qstat -f1" nil)
+	 tasklist (ssh-execute session (read-script "qstat.txt") nil)
 	 qstat (interpret-task-list tasklist)
 	 ]
 	 (println "Periodic qstat")
@@ -179,8 +183,8 @@
        (.disconnect sftp))
       (println "Source code uploaded")
       (let [
-       compilation-result (ssh-execute session "cd jscfi && rm -f program && mpicc source.c -o program 2>&1; echo -n $? > ret" nil)
-       compilation-ok (ssh-execute session "cat jscfi/ret" nil)
+       compilation-result (ssh-execute session (read-script "compile.txt") nil)
+       compilation-ok (ssh-execute session (read-script "compile-ret.txt") nil)
        ]
        (println "Compilation:" compilation-ok)
        (if 
@@ -194,18 +198,8 @@
      (let [task (get tasks task-id)]
       (let [
        schedule-result (chomp (ssh-execute session 
-	   "cd jscfi && cat > run.pbs && qsub run.pbs" 
-	   (format "#PBS -l walltime=00:00:01
-#PBS -l nodes=%s
-#PBS -N %s
-hostname
-cd ~/jscfi/
-date >> ~/jscfi/log
-hostname >> ~/jscfi/log
-echo \"PBS_O_WORKDIR=$PBS_O_WORKDIR\" >> ~/jscfi/log
-cp $PBS_NODEFILE ~/jscfi/pbs-nodes
-mpirun --hostfile ~/jscfi/pbs-nodes prog 2> stderr > stdout"
-	    (:node-count task) (:name task))))
+	   (read-script "schedule.txt")
+	   (format (read-script "run.pbs.txt") (:node-count task) (:name task))))
        ]
        (println "Schedule id:" schedule-result)
        (if 
@@ -268,8 +262,7 @@ mpirun --hostfile ~/jscfi/pbs-nodes prog 2> stderr > stdout"
 	     (auth-succeed auth-observer)
 	     (emit-impl state-agent #(connected %))
 	     (emit-impl state-agent #(something-changed %))
-	     (let [tasks (interpret-tasks 
-		 (ssh-execute session "mkdir -p jscfi && cd jscfi && touch tasks.clj && cat tasks.clj" nil))]
+	     (let [tasks (interpret-tasks (ssh-execute session (read-script "read-tasks.txt") nil))]
 	      (-> state 
 	       (assoc :connected true) 
 	       (assoc :auth-observer auth-observer) 
