@@ -72,7 +72,7 @@
   (add-observer jscfi observer)
   (.setVisible (create-authentication-window jscfi) true)
   (.addMouseListener jlist (proxy [MouseAdapter] [] (mouseClicked [event] (when (= (.getClickCount event) 2) (.actionPerformed action-open nil)))))
-  (.addWindowListener frame (proxy [WindowAdapter] [] (windowClosing [_] (comment "There was password delivery here") (System/exit 0))))
+  (.addWindowListener frame (proxy [WindowAdapter] [] (windowClosing [_] (exit-if-needed))))
   (let [task (proxy [TimerTask] []
       	(run [] (periodic-update jscfi)))]
    (. (new Timer) (schedule task (long 3000) (long 5000))))

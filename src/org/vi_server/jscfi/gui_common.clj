@@ -10,5 +10,9 @@
    (doseq [key (keys options)] (.putValue action key (options key))))
   action))
 
-(defn is-running-from-repl []
- (bound? #'*1))
+;; Does not work from leiningen:
+;; (defn is-running-from-repl [] (println "#'*1 is " #'*1 " bound:" (bound? #'*1)) (bound? #'*1))
+
+
+(defn exit-if-needed [] 
+ (when-not (System/getenv "DONT_EXIT") (System/exit 0)))
