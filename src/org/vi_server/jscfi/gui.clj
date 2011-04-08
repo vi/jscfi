@@ -40,7 +40,7 @@
 	  (.setVisible (create-task-window t jscfi) true)))))
       { Action/SHORT_DESCRIPTION  "Open selected task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_O Event/CTRL_MASK) })
   menubar (JMenuBar.)
-  view-menu (JMenu. "File")
+  view-menu (JMenu. "View")
   action-menu (JMenu. "Action")
   observer (reify JscfiObserver 
       (connected [this] (.setVisible frame true))
@@ -63,8 +63,8 @@
   (.add view-menu    action-open)
   (.add action-menu    action-create)
   (doto menubar
-   (.add view-menu)
-   (.add action-menu))                
+   (.add action-menu)
+   (.add view-menu))
   (add-observer jscfi observer)
   (.setVisible (create-authentication-window jscfi) true)
   (.addMouseListener jlist (proxy [MouseAdapter] [] (mouseClicked [event] (when (= (.getClickCount event) 2) (.actionPerformed action-open nil)))))
