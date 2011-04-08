@@ -14,7 +14,7 @@
 
 (defprotocol TaskListEntry (task [this]))
 (deftype TaskListEntryImpl [task] TaskListEntry
-    (toString [this] (format "%s    %s    %s    %s" (:status task) (:source-file task) (:name task) (:outer-id task)))
+    (toString [this] (format "%s    %s    %s    %s" (:status task) (:source-file task) (:name task) (:pbs-id task)))
     (task [this] task))
 
 (defn create-main-window [jscfi] 
