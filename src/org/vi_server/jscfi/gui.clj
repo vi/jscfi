@@ -19,9 +19,8 @@
 
 (defn create-main-window [jscfi] 
  (let [
-  panel (JPanel. (MigLayout. "", "[grow][pref][pref]", "[pref][grow]"))
+  panel (JPanel. (MigLayout. "", "[grow][pref][pref]", "[grow]"))
   frame (JFrame.)
-  text-field (JTextField.)
   list-model (DefaultListModel.)
   jlist (JList. list-model)
   action-create (create-action "Create task" (fn [_] (.setVisible (create-task-window {} jscfi) true))
@@ -57,9 +56,6 @@
    (.setLocationRelativeTo nil)
    (.setTitle "Jscfi - SuperComputer Phoenix Initiative GUI"))
   (doto panel
-   (.add text-field "growx")
-   (.add (JButton. action-create) )
-   (.add (JButton. action-open) "wrap")
    (.add (JScrollPane. jlist) "grow,span 3")
    (.revalidate))
   (.add view-menu    action-refresh)
