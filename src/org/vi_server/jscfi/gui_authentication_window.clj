@@ -11,7 +11,7 @@
 
 (defn create-authentication-window [jscfi]
  (let [
-  panel (JPanel. (MigLayout. "", "[][grow]", "[grow]5[grow][grow]"))
+  panel (JPanel. (MigLayout. "", "[][grow][pref]", "[grow]5[grow][grow]"))
   frame (JFrame.)
   prefs (.node (java.util.prefs.Preferences/userRoot) "/org/vi-server/jscfi")
   user-field (JTextField. (.get prefs "login" "zimyanin"))
@@ -46,15 +46,22 @@
   )
   (doto panel
    (.add (JLabel. "Server:"))
-   (.add server-field "growx,wrap")
+   (.add server-field "growx,wrap,span 2")
+
    (.add (JLabel. "Login:"))
-   (.add user-field "growx,wrap")
+   (.add user-field "growx,wrap,span 2")
+
    (.add (JLabel. "Password:"))
-   (.add password-field "growx,wrap")
+   (.add password-field "growx,wrap,span 2")
+
    (.add (JLabel. "Keyfile:"))
-   (.add keyfile-field "growx,wrap")
+   (.add keyfile-field "growx")
+   (.add (create-file-chooser-button keyfile-field :open) "wrap")
+
    (.add (JLabel. "Known hosts:"))
-   (.add hostsfile-field "growx,wrap")
+   (.add hostsfile-field "growx")
+   (.add (create-file-chooser-button hostsfile-field :open) "wrap")
+
    (.add connstage-label "span 2,wrap")
    (.add (JButton. action-connect) "span 2")
    (.revalidate))
