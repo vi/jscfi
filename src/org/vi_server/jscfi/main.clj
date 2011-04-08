@@ -1,4 +1,6 @@
 (ns org.vi-server.jscfi.main
     "GUI for Jscfi"
-    (:use org.vi-server.jscfi.gui))
-(main)
+    (:use org.vi-server.jscfi.gui)
+    (:use org.vi-server.jscfi.real)
+    )
+(gui-main (get-real-jscfi))
