@@ -41,7 +41,6 @@
   (doto frame 
    (.setSize 400 220)
    (.setContentPane panel)
-   (.setDefaultCloseOperation JFrame/DO_NOTHING_ON_CLOSE)
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (exit-if-needed))))
    (.setTitle "Login to SCFI")
   )
