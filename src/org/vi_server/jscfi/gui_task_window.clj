@@ -21,6 +21,7 @@
   input-file-field  (JTextField.   (:input-file task))
   output-file-field (JTextField.   (:output-file task))
   node-count-field  (JTextField.   (str (:node-count task)))
+  walltime-field    (JTextField.   (str (:walltime task)))
   task-id (atom (:id task))
   action-display (create-action "Debug Print" (fn [_] (prn (get-task jscfi @task-id)))
       { Action/SHORT_DESCRIPTION  "Display it", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) })
@@ -33,6 +34,7 @@
 	      (assoc :input-file     (.getText input-file-field))
 	      (assoc :output-file    (.getText output-file-field))
 	      (assoc :node-count     (.getText node-count-field))
+	      (assoc :walltime       (.getText walltime-field))
 	      )]
 	   (if @task-id
 	    (alter-task jscfi newtask)
@@ -61,11 +63,12 @@
           (.setText input-file-field   (str (:input-file task))) 
           (.setText output-file-field  (str (:output-file task))) 
           (.setText node-count-field   (str (:node-count task)))
+          (.setText walltime-field     (str (:walltime task)))
 	  (catch Exception e (println e)))
 	  )))))
   ]
   (doto frame 
-   (.setSize 600 340)
+   (.setSize 600 360)
    (.setContentPane panel)
    (.setTitle "Jscfi task")
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (remove-observer jscfi observer))))
@@ -90,6 +93,7 @@
    (.add (JLabel. "Output file:"))   (.add output-file-field  "growx")
 				           (.add (create-file-chooser-button output-file-field :save) "wrap")
    (.add (JLabel. "Node count:"))    (.add node-count-field   "growx,wrap,span 2")
+   (.add (JLabel. "Walltime:"))      (.add walltime-field     "growx,wrap,span 2")
    (.add button-panel "span 3")
    (.revalidate))
   (.setLocationRelativeTo frame nil)

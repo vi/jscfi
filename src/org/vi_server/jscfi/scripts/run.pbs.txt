@@ -1,4 +1,4 @@
-#PBS -l walltime=00:00:01
+#PBS -l walltime=%s
 #PBS -l nodes=%s
 #PBS -N %s
 hostname

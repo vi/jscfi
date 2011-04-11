@@ -200,7 +200,7 @@
       (let [
        schedule-result (chomp (ssh-execute session 
 	   (read-script "schedule.txt" directory (:id task))
-	   (read-script "run.pbs.txt" (:node-count task) (:name task) directory (:id task))))
+	   (read-script "run.pbs.txt" (:walltime task) (:node-count task) (:name task) directory (:id task))))
        ]
        (println "Schedule id:" schedule-result)
        (if 
