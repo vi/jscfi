@@ -11,9 +11,9 @@
  (:import (java.io.ByteArrayInputStream))
  )  
 
-(defn read-script [script-name] 
- (slurp (ClassLoader/getSystemResourceAsStream 
-	 (str "org/vi_server/jscfi/scripts/" script-name))))
+(defn read-script [script-name & args] 
+ (apply format (slurp (ClassLoader/getSystemResourceAsStream 
+	 (str "org/vi_server/jscfi/scripts/" script-name))) args))
 
 (defn serialise [object]
  (binding [*print-dup* true] (with-out-str (prn object))))
@@ -56,7 +56,7 @@
  `(emit-impl ~'state-agent (fn[~'observer11] (~mname ~'observer11 ~@whatever))))
 
 (defn persist-tasks [session state-agent tasks]
-    (ssh-execute session (read-script "save-tasks.txt") (serialise tasks))
+    (ssh-execute session (read-script "save-tasks.txt" (:directory @state-agent)) (serialise tasks))
     (emit something-changed)
     tasks
 )
@@ -126,6 +126,7 @@
 	~'auth-observer (:auth-observer ~'state)
 	~'connected (:connected ~'state)
 	~'session (:session ~'state)
+	~'directory (:directory ~'state)
 	] 
 	(try
 	 ~@new-state
@@ -179,12 +180,12 @@
      (let [task (get tasks task-id)]
       (let [sftp (.openChannel session "sftp")]
        (.connect sftp 3000)
-       (.put sftp (:source-file task) "jscfi/source.c" ChannelSftp/OVERWRITE)
+       (.put sftp (:source-file task) (format "jscfi/%s/%s/source.c" directory (:id task)) ChannelSftp/OVERWRITE)
        (.disconnect sftp))
       (println "Source code uploaded")
       (let [
-       compilation-result (ssh-execute session (read-script "compile.txt") nil)
-       compilation-ok (ssh-execute session (read-script "compile-ret.txt") nil)
+       compilation-result (ssh-execute session (read-script "compile.txt" directory (:id task)) nil)
+       compilation-ok (ssh-execute session (read-script "compile-ret.txt" directory (:id task)) nil)
        ]
        (println "Compilation:" compilation-ok)
        (if 
@@ -198,8 +199,8 @@
      (let [task (get tasks task-id)]
       (let [
        schedule-result (chomp (ssh-execute session 
-	   (read-script "schedule.txt")
-	   (format (read-script "run.pbs.txt") (:node-count task) (:name task))))
+	   (read-script "schedule.txt" directory (:id task))
+	   (read-script "run.pbs.txt" (:node-count task) (:name task) directory (:id task))))
        ]
        (println "Schedule id:" schedule-result)
        (if 
@@ -214,7 +215,7 @@
      (let [task (get tasks task-id)]
       (let [sftp (.openChannel session "sftp")]
        (.connect sftp 3000)
-       (.put sftp (:input-file task) "jscfi/input.txt" ChannelSftp/OVERWRITE)
+       (.put sftp (:input-file task) (format "jscfi/%s/%s/input.txt" directory (:id task)) ChannelSftp/OVERWRITE)
        (.disconnect sftp))
       (println "Input file uploaded")) state)
 
@@ -223,13 +224,13 @@
      (let [task (get tasks task-id)]
       (let [sftp (.openChannel session "sftp")]
        (.connect sftp 3000)
-       (.get sftp "jscfi/output.txt" (:output-file task))
+       (.get sftp (format "jscfi/%s/%s/output.txt" directory (:id task)) (:output-file task))
        (.disconnect sftp))
       (println "Output file downloaded")) state)
 
     (rj-method add-observer (observer_) (assoc state :observers (conj observers observer_)))
     (rj-method remove-observer (observer_) (assoc state :observers (disj observers observer_)))
-    (connect [this auth-observer address username]
+    (connect [this auth-observer address username directory]
 	(send state-agent (fn[state]
 	;(do (let [state @state-agent]
 	   (let [
@@ -262,12 +263,13 @@
 	     (auth-succeed auth-observer)
 	     (emit-impl state-agent #(connected %))
 	     (emit-impl state-agent #(something-changed %))
-	     (let [tasks (interpret-tasks (ssh-execute session (read-script "read-tasks.txt") nil))]
+	     (let [tasks (interpret-tasks (ssh-execute session (read-script "read-tasks.txt" directory) nil))]
 	      (-> state 
 	       (assoc :connected true) 
 	       (assoc :auth-observer auth-observer) 
 	       (assoc :session session)
 	       (assoc :tasks tasks)
+	       (assoc :directory directory)
 	      ))
 	     (catch Exception e 
 	      (.printStackTrace e)
@@ -282,6 +284,7 @@
     :observers #{},
     :auth-observer nil,
     :tasks {},
-    :connected false
+    :connected false,
+    :directory "",
     })))
 

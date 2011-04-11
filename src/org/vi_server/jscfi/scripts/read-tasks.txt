@@ -1,1 +1,2 @@
-mkdir -p jscfi && cd jscfi && touch tasks.clj && cat tasks.clj
+DIR="%s"
+mkdir -p jscfi/"$DIR" && cd jscfi/"$DIR" && touch tasks.clj && cat tasks.clj

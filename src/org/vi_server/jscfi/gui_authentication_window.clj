@@ -19,6 +19,7 @@
   password-field (JPasswordField.)
   keyfile-field (JTextField. (.get prefs "keyfile" ""))
   hostsfile-field (JTextField. (.get prefs "known_hosts" ""))
+  directory-field (JTextField. (.get prefs "directory" "default"))
   connstage-label (JLabel.)
   auth-observer (reify AuthObserver
       (get-password [this] (.getText password-field))
@@ -29,6 +30,7 @@
        (.put prefs "hostname" (.getText server-field))
        (.put prefs "keyfile" (.getText keyfile-field))
        (.put prefs "known_hosts" (.getText hostsfile-field))
+       (.put prefs "directory" (.getText directory-field))
        (doto frame (.setVisible false) (.dispose))
        )
       (auth-failed [this] (javax.swing.JOptionPane/showMessageDialog nil 
@@ -36,10 +38,10 @@
       (connection-stage [this msg] (SwingUtilities/invokeLater (fn [](.setText connstage-label msg))))
       )
   action-connect (create-action "Connect" (fn [_] 
-	  (connect jscfi auth-observer (.getText server-field) (.getText user-field))) {})
+	  (connect jscfi auth-observer (.getText server-field) (.getText user-field) (.getText directory-field))) {})
   ]
   (doto frame 
-   (.setSize 400 220)
+   (.setSize 400 240)
    (.setContentPane panel)
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (exit-if-needed))))
    (.setTitle "Login to SCFI")
@@ -61,6 +63,9 @@
    (.add (JLabel. "Known hosts:"))
    (.add hostsfile-field "growx")
    (.add (create-file-chooser-button hostsfile-field :open) "wrap")
+   
+   (.add (JLabel. "Directory:"))
+   (.add directory-field "growx,wrap,span 2")
 
    (.add connstage-label "span 2,wrap")
    (.add (JButton. action-connect) "span 2")

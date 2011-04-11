@@ -1,1 +1,7 @@
-cd jscfi && rm -f program && mpicc source.c -o program 2>&1; echo -n 0 > ret
+DIR="%s"
+TDIR="%s"
+mkdir -p jscfi/"$DIR"/"$TDIR" && 
+cd jscfi/"$DIR"/"$TDIR" && 
+rm -f program && 
+mpicc source.c -o program 2>&1; 
+echo -n $? > ret

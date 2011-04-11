@@ -1,1 +1,3 @@
-cat jscfi/ret
+DIR="%s"
+TDIR="%s"
+cat jscfi/"$DIR"/"$TDIR"/ret

@@ -2,9 +2,11 @@
 #PBS -l nodes=%s
 #PBS -N %s
 hostname
-cd ~/jscfi/
-date >> ~/jscfi/log
-hostname >> ~/jscfi/log
-echo "PBS_O_WORKDIR=" >> ~/jscfi/log
-cp  ~/jscfi/pbs-nodes
-mpirun --hostfile ~/jscfi/pbs-nodes prog 2> stderr > stdout
+DIR="%s"
+TDIR="%s"
+cd $HOME/jscfi/"$DIR"/"$TDIR" || exit 1
+date >> log
+hostname >> log
+echo "PBS_O_WORKDIR=" >> log
+cp "$PBS_NODEFILE" pbs-nodes
+mpirun --hostfile `pwd`/pbs-nodes program 2> stderr > stdout

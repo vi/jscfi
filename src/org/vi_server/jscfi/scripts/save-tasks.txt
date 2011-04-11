@@ -1,1 +1,2 @@
-mkdir -p jscfi && cd jscfi && cat > tasks.clj
+DIR="%s"
+mkdir -p jscfi/"$DIR" && cd jscfi/"$DIR" && cat > tasks.clj
