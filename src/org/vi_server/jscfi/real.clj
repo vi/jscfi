@@ -7,7 +7,7 @@
  (:use [clojure.contrib.str-utils :only [chomp]])
  ;(:require [org.danlarkin.json :as json])
  ;(:require [clj-yaml.core :as yaml])
- (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp))
+ (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp SftpException))
  (:import (java.io.ByteArrayInputStream))
  )  
 
@@ -180,6 +180,9 @@
      (let [task (get tasks task-id)]
       (let [sftp (.openChannel session "sftp")]
        (.connect sftp 3000)
+       (try 
+	(.mkdir sftp (format "jscfi/%s/%s" directory (:id task))) 
+	(catch SftpException e (println "The directory does already exist")))
        (.put sftp (:source-file task) (format "jscfi/%s/%s/source.c" directory (:id task)) ChannelSftp/OVERWRITE)
        (.disconnect sftp))
       (println "Source code uploaded")
