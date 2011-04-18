@@ -51,7 +51,7 @@
     (suspend-task [this task-id])
     (resume-task [this task-id])
     (download-task [this task-id])
-    (clear-task [this task-id])
+    (purge-task [this task-id])
 
     ;; Update information about tasks
     (periodic-update [this])

@@ -212,6 +212,12 @@
         (newtasks (assoc tasks (:id task)
 	    (-> task (assoc :status :scheduled) (assoc :pbs-id schedule-result)))))
      )))
+    
+    (rj-method purge-task (task-id) 
+     (println "Purge task")
+     (let [task (get tasks task-id)]
+      (ssh-execute session (read-script "purge.txt" directory (:id task)) nil)
+      (newtasks (assoc tasks task-id (assoc task :status :purged)))))
 
     (rj-method upload-task (task-id) 
      (println "Uploading input file") 

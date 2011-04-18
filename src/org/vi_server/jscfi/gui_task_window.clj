@@ -60,6 +60,8 @@
       { Action/SHORT_DESCRIPTION  "Schedule the task for execution", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_F Event/CTRL_MASK) })
   action-download (create-action "Download" (fn [_] (download-task jscfi @task-id))
       { Action/SHORT_DESCRIPTION  "Download output.txt", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_D Event/CTRL_MASK) })
+  action-purge (create-action "Purge" (fn [_] (purge-task jscfi @task-id))
+      { Action/SHORT_DESCRIPTION  "Remove task files from server", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_P Event/CTRL_MASK) })
   button-panel (JPanel. (MigLayout. "", "[pref][pref]", "[grow]5"))
   observer (reify JscfiObserver 
       (something-changed [this] (SwingUtilities/invokeLater (fn []
@@ -89,6 +91,7 @@
    (.add (JButton. action-upload) "growx,wrap")
    (.add (JButton. action-schedule) "growx")
    (.add (JButton. action-download) "growx")
+   (.add (JButton. action-purge) "growx")
    (.add (JButton. action-remove) "growx")
    (.revalidate))
   (doto panel
