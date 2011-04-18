@@ -1,0 +1,4 @@
+jscfi-0.5:
+	1. Automatically creating task's directory when compiling.
+	2. Checking of certain fields by regexes
+	3. Purge command
