@@ -33,12 +33,13 @@
        (.put prefs "directory" (.getText directory-field))
        (doto frame (.setVisible false) (.dispose))
        )
-      (auth-failed [this] (javax.swing.JOptionPane/showMessageDialog nil 
-			   "Login failed" "jscfi" javax.swing.JOptionPane/INFORMATION_MESSAGE))
+      (auth-failed [this] (msgbox "Login failed"))
       (connection-stage [this msg] (SwingUtilities/invokeLater (fn [](.setText connstage-label msg))))
       )
   action-connect (create-action "Connect" (fn [_] 
-	  (connect jscfi auth-observer (.getText server-field) (.getText user-field) (.getText directory-field))) {})
+      (if (re-find #"^[A-Za-z0-9_]{1,32}$" (.getText directory-field))
+       (connect jscfi auth-observer (.getText server-field) (.getText user-field) (.getText directory-field))
+       (msgbox "Directory should match ^[A-Za-z0-9_]{1,32}$"))) {})
   ]
   (doto frame 
    (.setSize 400 240)

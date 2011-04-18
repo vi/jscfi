@@ -16,6 +16,8 @@
    (when (= (if (= mode :open) (.showOpenDialog fc textfield) (.showSaveDialog fc textfield)) JFileChooser/APPROVE_OPTION)
     (.setText textfield (str (.getSelectedFile fc)))))) {})))
 
+(defn msgbox [text] (javax.swing.JOptionPane/showMessageDialog nil 
+			   text "jscfi" javax.swing.JOptionPane/INFORMATION_MESSAGE))
 
 ;; Does not work from leiningen:
 ;; (defn is-running-from-repl [] (println "#'*1 is " #'*1 " bound:" (bound? #'*1)) (bound? #'*1))

@@ -36,9 +36,18 @@
 	      (assoc :node-count     (.getText node-count-field))
 	      (assoc :walltime       (.getText walltime-field))
 	      )]
-	   (if @task-id
-	    (alter-task jscfi newtask)
-	    (swap! task-id (fn[_](register-task jscfi newtask))))))
+	   (try
+	    (doall (map 
+	     #(when-not (re-find (:regex %) (get newtask (:field %)))
+	      (throw (Exception. (str (:caption %) " must match" (:regex %))))) [
+		   {:field :name,       :caption "Task name",  :regex #"^[a-zA-Z0-9_]{1,32}$"}
+		   {:field :node-count, :caption "Node count", :regex #"^[0-9]{1,10}$"}
+		   {:field :walltime,   :caption "Walltime",   :regex #"^\d\d:\d\d:\d\d$"}
+	    ]))
+	    (if @task-id
+	     (alter-task jscfi newtask)
+	     (swap! task-id (fn[_](register-task jscfi newtask))))
+	  (catch Exception e (println e) (msgbox (str e))))))
       { Action/SHORT_DESCRIPTION  "Create/change a task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_ENTER Event/CTRL_MASK) })
 
   action-remove (create-action "Remove" (fn [_] (remove-task jscfi @task-id) (swap! task-id (fn[_]nil)))
