@@ -23,7 +23,7 @@
   frame (JFrame.)
   list-model (DefaultListModel.)
   jlist (JList. list-model)
-  action-create (create-action "Create task" (fn [_] (.setVisible (create-task-window {:node-count "1", :walltime "00:01:00"} jscfi) true))
+  action-create (create-action "Create task" (fn [_] (.setVisible (create-task-window {:name "Untitled", :node-count "1", :walltime "00:01:00"} jscfi) true))
       { Action/SHORT_DESCRIPTION  "Open window for task creation", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_N Event/CTRL_MASK) })
   action-refresh (create-action "Refresh" (fn [_] 
 	  (.clear list-model)
