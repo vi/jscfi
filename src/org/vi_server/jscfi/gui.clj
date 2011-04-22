@@ -48,8 +48,8 @@
   action-menu (JMenu. "Action")
   observer (reify JscfiObserver 
       (connected [this] (.setVisible frame true))
-      (compilation-failed [this task message] (javax.swing.JOptionPane/showMessageDialog nil 
-				message (:name task) javax.swing.JOptionPane/INFORMATION_MESSAGE))
+      (compilation-failed [this task message] 
+	(msgbox (str (:name task) "\n" message)))
       (something-changed [this] (SwingUtilities/invokeLater (fn [](.actionPerformed action-refresh nil))))
   )
   ]
