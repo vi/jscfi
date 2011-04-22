@@ -118,6 +118,9 @@
 
 (defmacro ^{:private true} rj-method [name add-args & new-state] 
  `(~name  [~'this ~@add-args] 
+     (when-let [~'err (agent-error ~'state-agent)]
+      (println (str "Agent errror: " ~'err))
+      (restart-agent ~'state-agent @~'state-agent))
      (send ~'state-agent 
       (fn[~'state] ;; does not need to be hygienic
        (let[
