@@ -1,8 +1,9 @@
 (ns org.vi-server.jscfi.jscfi "Jscfi facade between engine and GUI")
 
-;; task is a map like  {:name "Qqq", :source-file "qqq.c", :input-file "input.txt", :output-file "output.txt", :pbs-id "server-33" :node-count 4, :status :waiting, :id "0.3324234"} 
+;; task is a map like  {:name "Qqq", :source-file "qqq.c", :input-file "input.txt", :output-file "output.txt", :pbs-id "server-33" :node-count 4, :status :waiting, :id "0.3324234", :source-mode :single-c-file} 
 ;;
 ;; States: :none :compiled :uploaded :error :deletion :hold :running :restarted :suspended :transferring :threshold :waiting :finished :downloaded :cleaned
+;; Source Modes: :single-c-file :single-cpp-file :directory-with-a-makefile :single-lammps-file :single-shellscript-file
 
 (defprotocol JscfiObserver
     "Callbacks from Jscfi object"
@@ -52,6 +53,8 @@
     (resume-task [this task-id])
     (download-task [this task-id])
     (purge-task [this task-id])
+
+    (get-source-modes [this]) ;; return the list like [:single-c-file :single-cpp-file :directory-with-a-makefile :single-lammps-file :single-shellscript-file]
 
     ;; Update information about tasks
     (periodic-update [this])

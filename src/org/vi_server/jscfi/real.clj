@@ -179,6 +179,8 @@
 
     (get-tasks [this] (vals (:tasks @state-agent)) )
     (get-task [this id] (get (:tasks @state-agent) id) )
+    (get-source-modes [this]
+     [:single-c-file :single-cpp-file :directory-with-a-makefile :single-lammps-file :single-shellscript-file])
     (register-task [this task] (println "Task registered") (println task) (let [rnd-id (.toString (rand))] 
 	(send state-agent #(assoc % :tasks (persist-tasks (:session %) state-agent (assoc (:tasks %) rnd-id 
 	    (-> task (assoc :id rnd-id) (assoc :status :created))))))

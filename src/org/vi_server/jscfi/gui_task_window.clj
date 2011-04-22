@@ -4,7 +4,7 @@
     (:use org.vi-server.jscfi.gui-common)
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
-     (javax.swing JMenu JMenuBar JPasswordField)
+     (javax.swing JMenu JMenuBar JPasswordField JComboBox)
      (java.awt.event KeyEvent MouseAdapter WindowAdapter)
      (java.awt Event)
      (net.miginfocom.swing MigLayout)))
@@ -18,6 +18,12 @@
   status-field      (JLabel.       (str (:status task)))
   outer-id-field    (JLabel.       (:pbs-id task))
   source-file-field (JTextField.   (:source-file task))
+  source-mode-keyword-to-index (zipmap (get-source-modes jscfi) (take (count (get-source-modes jscfi)) (iterate inc 0)))
+  source-mode-field (JComboBox. (into-array (get-source-modes jscfi)))
+  source-mode-from-keyword-to-combobox (fn[kw] 
+      (if (find source-mode-keyword-to-index kw)
+      (.setSelectedIndex source-mode-field (get source-mode-keyword-to-index kw))
+      (.setSelectedIndex source-mode-field 0)))
   input-file-field  (JTextField.   (:input-file task))
   output-file-field (JTextField.   (:output-file task))
   node-count-field  (JTextField.   (str (:node-count task)))
@@ -31,6 +37,7 @@
            newtask (-> task
 	      (assoc :name           (.getText name-field))
 	      (assoc :source-file    (.getText source-file-field))
+	      (assoc :source-mode    (get (get-source-modes jscfi) (.getSelectedIndex source-mode-field)))
 	      (assoc :input-file     (.getText input-file-field))
 	      (assoc :output-file    (.getText output-file-field))
 	      (assoc :node-count     (.getText node-count-field))
@@ -75,11 +82,12 @@
           (.setText output-file-field  (str (:output-file task))) 
           (.setText node-count-field   (str (:node-count task)))
           (.setText walltime-field     (str (:walltime task)))
+	  (source-mode-from-keyword-to-combobox (:source-mode task))
 	  (catch Exception e (println e)))
 	  )))))
   ]
   (doto frame 
-   (.setSize 600 360)
+   (.setSize 600 380)
    (.setContentPane panel)
    (.setTitle "Jscfi task")
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (remove-observer jscfi observer))))
@@ -100,6 +108,7 @@
    (.add (JLabel. "Task id:"))       (.add outer-id-field     "growx,wrap,span 2")
    (.add (JLabel. "Source file:"))   (.add source-file-field  "growx") 
 				           (.add (create-file-chooser-button source-file-field :open) "wrap")
+   (.add (JLabel. "Source mode:"))   (.add source-mode-field  "growx,wrap,span 2")
    (.add (JLabel. "Input file:"))    (.add input-file-field   "growx")
 				           (.add (create-file-chooser-button input-file-field :open) "wrap")
    (.add (JLabel. "Output file:"))   (.add output-file-field  "growx")
@@ -110,4 +119,5 @@
    (.revalidate))
   (.setLocationRelativeTo frame nil)
   (add-observer jscfi observer)
+  (source-mode-from-keyword-to-combobox (:source-mode task))
   frame))
