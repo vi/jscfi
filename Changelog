@@ -1,3 +1,6 @@
+jscfi-0.6:
+	1. Don't hang on failed compilation
+
 jscfi-0.5:
 	1. Automatically creating task's directory when compiling.
 	2. Checking of certain fields by regexes
