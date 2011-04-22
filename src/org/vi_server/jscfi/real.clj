@@ -242,6 +242,9 @@
 
     (rj-method add-observer (observer_) (assoc state :observers (conj observers observer_)))
     (rj-method remove-observer (observer_) (assoc state :observers (disj observers observer_)))
+
+    (debug-print [this] (println @state-agent))
+
     (connect [this auth-observer address username directory]
 	(send state-agent (fn[state]
 	;(do (let [state @state-agent]

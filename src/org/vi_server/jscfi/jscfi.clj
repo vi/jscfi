@@ -55,5 +55,7 @@
 
     ;; Update information about tasks
     (periodic-update [this])
+    
+    (debug-print [this])
 )
 

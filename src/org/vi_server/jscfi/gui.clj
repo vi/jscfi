@@ -39,6 +39,10 @@
 	 (let [t (task (.elementAt list-model index))]
 	  (.setVisible (create-task-window t jscfi) true)))))
       { Action/SHORT_DESCRIPTION  "Open selected task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_O Event/CTRL_MASK) })
+  action-debug-print (create-action "Debug print" 
+      (fn [_] 
+       (debug-print jscfi))
+      { Action/SHORT_DESCRIPTION  "Print debugging information", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_P Event/CTRL_MASK) })
   menubar (JMenuBar.)
   view-menu (JMenu. "View")
   action-menu (JMenu. "Action")
@@ -62,6 +66,7 @@
   (.add view-menu    action-update)
   (.add view-menu    action-open)
   (.add action-menu    action-create)
+  (.add action-menu    action-debug-print)
   (doto menubar
    (.add action-menu)
    (.add view-menu))
