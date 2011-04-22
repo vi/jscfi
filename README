@@ -1,2 +1,4 @@
 GUI for uploading and starting tasks at BSU SCFI supercomputer.
 Written in Clojure/Swing.
+
+Standalone jar: http://vi-server.org/pub/jscfi-0.6-SNAPSHOT-standalone.jar
