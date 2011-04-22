@@ -115,11 +115,16 @@
 
 (defmacro expand-first [the-set & code] `(do ~@(prewalk #(if (and (list? %) (contains? the-set (first %))) (macroexpand-all %) %) code)))
 
+(defn get-string-stack-trace [e]
+    (let [sw (java.io.StringWriter.), pw (java.io.PrintWriter. sw)]
+     (.printStackTrace e pw)
+     (str sw)))
 
 (defmacro ^{:private true} rj-method [name add-args & new-state] 
  `(~name  [~'this ~@add-args] 
      (when-let [~'err (agent-error ~'state-agent)]
-      (println (str "Agent errror: " ~'err))
+      (println "Agent errror: ")
+      (println (get-string-stack-trace ~'err))
       (restart-agent ~'state-agent @~'state-agent))
      (send ~'state-agent 
       (fn[~'state] ;; does not need to be hygienic
