@@ -50,7 +50,10 @@
   (try      	    
    (let [observers (:observers state)] 
     (doall (map (fn[observer]
-     (try (closure observer) (catch Exception e (println "Observe exception: " e)))) observers)))
+     (try (closure observer) 
+      (catch Exception e (println "Observe exception: " e))
+      (catch AbstractMethodError e "Just ignoring, observer can omit methods"))
+     ) observers)))
   (catch Exception e (println e))) state)))
 (defmacro emit [mname & whatever] "Send a signal to all observers (delayed)"
  `(emit-impl ~'state-agent (fn[~'observer11] (~mname ~'observer11 ~@whatever))))
