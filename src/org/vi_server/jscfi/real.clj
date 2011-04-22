@@ -45,14 +45,14 @@
  (if (empty? source) {}
   (deserialise source)))
 
-(defn emit-impl[state-agent closure]
+(defn emit-impl[state-agent closure] "Send agent a task to loop over observers and send things (protected by try-catches)"
  (send state-agent (fn[state]
-  (let [observers (:observers state)] 
-   (doall (map (fn[observer]
-    (try
-	(closure observer)	
-    (catch Exception e (println "Observe exception: " e)))) observers))) state)))
-(defmacro emit [mname & whatever]
+  (try      	    
+   (let [observers (:observers state)] 
+    (doall (map (fn[observer]
+     (try (closure observer) (catch Exception e (println "Observe exception: " e)))) observers)))
+  (catch Exception e (println e))) state)))
+(defmacro emit [mname & whatever] "Send a signal to all observers (delayed)"
  `(emit-impl ~'state-agent (fn[~'observer11] (~mname ~'observer11 ~@whatever))))
 
 (defn persist-tasks [session state-agent tasks]
@@ -196,7 +196,7 @@
        (println "Compilation:" compilation-ok)
        (if 
 	(not= compilation-ok "0")
-        (do (emit compilation-failed task compilation-result) state)
+	(do (emit compilation-failed task compilation-result) state)
         (newtasks (assoc tasks (:id task) (-> task (assoc :status :compiled)))))
      )))
 
