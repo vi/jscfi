@@ -1,6 +1,6 @@
 (ns org.vi-server.jscfi.gui-common
     "Common things for Jscfi's GUI"
-    (:import (javax.swing AbstractAction Action JButton JFileChooser SwingUtilities)))
+    (:import (javax.swing AbstractAction Action JButton JFileChooser SwingUtilities JComboBox)))
 
 (defn create-action "Creates an implementation of AbstractAction." [name behavior options]
  (let [
@@ -18,6 +18,24 @@
 
 (defn msgbox [text] (SwingUtilities/invokeLater (fn[](javax.swing.JOptionPane/showMessageDialog nil 
 			   text "jscfi" javax.swing.JOptionPane/INFORMATION_MESSAGE))))
+
+
+(defn combobox-create [the-set] (try
+ {
+ :combobox (JComboBox. (into-array the-set)),
+ :keyword-to-index (zipmap the-set (take (count the-set) (iterate inc 0))),
+ :set the-set
+ } (catch Throwable e (println e))))
+(defn combobox-set [cb kw] (try
+ (println (:combobox cb))
+ (println (:keyword-to-index cb))
+ (if (find (:keyword-to-index cb) kw)
+  (.setSelectedIndex (:combobox cb) (get (:keyword-to-index cb) kw))
+  (.setSelectedIndex (:combobox cb) 0)) (catch Throwable e (println e))))
+(defn combobox-get [cb]
+ (get (:set cb) (.getSelectedIndex (:combobox cb))))
+(defn combobox-field [cb] (:combobox cb))
+ 
 
 ;; Does not work from leiningen:
 ;; (defn is-running-from-repl [] (println "#'*1 is " #'*1 " bound:" (bound? #'*1)) (bound? #'*1))
