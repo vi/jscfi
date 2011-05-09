@@ -7,7 +7,7 @@
  (:use [clojure.contrib.str-utils :only [chomp]])
  ;(:require [org.danlarkin.json :as json])
  ;(:require [clj-yaml.core :as yaml])
- (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp SftpException))
+ (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp SftpException SftpATTRS))
  (:import (java.io ByteArrayInputStream File))
  )  
 
@@ -51,7 +51,17 @@
       )
       (.put sftp file-or-dir destination ChannelSftp/OVERWRITE))))
 (defn ssh-download [sftp file-or-dir destination]
-    (.get sftp file-or-dir destination))
+    (println "ssh-download " file-or-dir " " destination)
+    (if (.isDir (.stat sftp file-or-dir))
+     (let [f (File. destination)]
+      (when-not (.exists f) (.mkdir f))
+      (doall (map 
+	(fn[x]
+	 (let [n (.getFilename x)]
+	  (when (and (not= n ".") (not= n ".."))
+	   (println x) (ssh-download sftp (str file-or-dir "/" n) (str destination "/" n))))) 
+       (.ls sftp file-or-dir))))
+     (.get sftp file-or-dir destination)))
 
 (defn interpret-tasks [^String source] 
  (if (empty? source) {}
