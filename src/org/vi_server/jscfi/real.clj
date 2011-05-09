@@ -41,6 +41,11 @@
    (str output))
   (catch Exception e (.printStackTrace e) (println "ssh-execute fail" e) nil)))
 
+(defn ssh-upload [sftp file-or-dir destination]
+    (.put sftp file-or-dir destination ChannelSftp/OVERWRITE))
+(defn ssh-download [sftp file-or-dir destination]
+    (.get sftp file-or-dir destination))
+
 (defn interpret-tasks [^String source] 
  (if (empty? source) {}
   (deserialise source)))
@@ -196,7 +201,7 @@
        (try 
 	(.mkdir sftp (format "jscfi/%s/%s" directory (:id task))) 
 	(catch SftpException e (println "The directory does already exist")))
-       (.put sftp (:source-file task) (format "jscfi/%s/%s/source.c" directory (:id task)) ChannelSftp/OVERWRITE)
+       (ssh-upload sftp (:source-file task) (format "jscfi/%s/%s/source.c" directory (:id task)))
        (.disconnect sftp))
       (println "Source code uploaded")
       (let [
@@ -237,7 +242,7 @@
      (let [task (get tasks task-id)]
       (let [sftp (.openChannel session "sftp")]
        (.connect sftp 3000)
-       (.put sftp (:input-file task) (format "jscfi/%s/%s/input.txt" directory (:id task)) ChannelSftp/OVERWRITE)
+       (ssh-upload sftp (:input-file task) (format "jscfi/%s/%s/input.txt" directory (:id task)))
        (.disconnect sftp))
       (println "Input file uploaded")) state)
 
@@ -246,7 +251,7 @@
      (let [task (get tasks task-id)]
       (let [sftp (.openChannel session "sftp")]
        (.connect sftp 3000)
-       (.get sftp (format "jscfi/%s/%s/output.txt" directory (:id task)) (:output-file task))
+       (ssh-download sftp (format "jscfi/%s/%s/output.txt" directory (:id task)) (:output-file task))
        (.disconnect sftp))
       (println "Output file downloaded")) state)
 
