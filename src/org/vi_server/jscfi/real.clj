@@ -8,7 +8,7 @@
  ;(:require [org.danlarkin.json :as json])
  ;(:require [clj-yaml.core :as yaml])
  (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp SftpException))
- (:import (java.io.ByteArrayInputStream))
+ (:import (java.io ByteArrayInputStream File))
  )  
 
 (defn read-script [script-name & args] 
@@ -42,7 +42,14 @@
   (catch Exception e (.printStackTrace e) (println "ssh-execute fail" e) nil)))
 
 (defn ssh-upload [sftp file-or-dir destination]
-    (.put sftp file-or-dir destination ChannelSftp/OVERWRITE))
+    (println "ssh-upload " file-or-dir " " destination)
+    (let [f (File. file-or-dir)]
+     (if (.isDirectory f)
+      (do
+       (.mkdir sftp destination)
+       (doall (map (fn[x] (println x) (ssh-upload sftp (str file-or-dir "/" x) (str destination "/" x))) (.list f)))
+      )
+      (.put sftp file-or-dir destination ChannelSftp/OVERWRITE))))
 (defn ssh-download [sftp file-or-dir destination]
     (.get sftp file-or-dir destination))
 
@@ -201,6 +208,7 @@
        (try 
 	(.mkdir sftp (format "jscfi/%s/%s" directory (:id task))) 
 	(catch SftpException e (println "The directory does already exist")))
+       (ssh-execute session (format "rm -Rf jscfi/%s/%s/source.c" directory (:id task)) nil)
        (ssh-upload sftp (:source-file task) (format "jscfi/%s/%s/source.c" directory (:id task)))
        (.disconnect sftp))
       (println "Source code uploaded")
@@ -242,6 +250,7 @@
      (let [task (get tasks task-id)]
       (let [sftp (.openChannel session "sftp")]
        (.connect sftp 3000)
+       (ssh-execute session (format "rm -Rf jscfi/%s/%s/input.txt" directory (:id task)) nil)
        (ssh-upload sftp (:input-file task) (format "jscfi/%s/%s/input.txt" directory (:id task)))
        (.disconnect sftp))
       (println "Input file uploaded")) state)
