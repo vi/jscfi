@@ -25,10 +25,8 @@
  :combobox (JComboBox. (into-array the-set)),
  :keyword-to-index (zipmap the-set (take (count the-set) (iterate inc 0))),
  :set the-set
- } (catch Throwable e (println e))))
+ } (catch Throwable e (println "pln3" e))))
 (defn combobox-set [cb kw] (try
- (println (:combobox cb))
- (println (:keyword-to-index cb))
  (if (find (:keyword-to-index cb) kw)
   (.setSelectedIndex (:combobox cb) (get (:keyword-to-index cb) kw))
   (.setSelectedIndex (:combobox cb) 0)) (catch Throwable e (println e))))
