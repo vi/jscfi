@@ -97,16 +97,30 @@
    }
   update-ui-traits (fn[] "Updates various things like changed/not-changed or enabled/disabled things"
    (if @task-id
-    nil
-    nil
+    (do 
+     (.setLabel (:create buttons) "Save changes")
+     (if (contains? #{:created :purged} (:status (get-task jscfi @task-id)))
+       (do
+	(->> [:compile :purge :remove] (map #(.setEnabled (% buttons) true)) (doall))
+	(->> [:upload :download :schedule] (map #(.setEnabled (% buttons) false)) (doall))
+       )
+       (do
+	(->> [:compile :upload :schedule :download :purge :remove] (map #(.setEnabled (% buttons) true)) (doall))
+       )
+     )
     )
-   )
+    (do 
+     (.setLabel (:create buttons) "Create")
+     (->> [:compile :upload :schedule :download :purge :remove] (map #(.setEnabled (% buttons) false)) (doall))
+    )
+   ))
   observer (reify JscfiObserver 
       (something-changed [this] (SwingUtilities/invokeLater (fn []
 	(let [task (get-task jscfi @task-id)]
 	 (try
 	  (doall (map #((:set (get fields2 %)) (get task %)) 
 	    [:name :status :pbs-id :source-file :input-file :output-file :node-count :walltime :source-mode]))
+	  (update-ui-traits)
 	  (catch Exception e (println "pln2" e)))
 	  )))))
   ]
@@ -134,4 +148,5 @@
    (.revalidate))
   (.setLocationRelativeTo frame nil)
   (add-observer jscfi observer)
+  (update-ui-traits)
   frame))
