@@ -28,14 +28,14 @@
    (let [v (get task (:tf x)), l (JLabel. (:label x))] (case (:type x)
     :label                                                           
 	(let [c (JLabel. (str v))] 
-	 {:label l, :widget c, :get #(.getText c), :set #(.setText c (str %)),
+	 {:info x, :label l, :widget c, :get #(.getText c), :set #(.setText c (str %)),
 	 :adder (fn[panel]
 	    (.add panel l)
 	    (.add panel c "growx,wrap,span 2"))
 	 })
     :textfield 
 	(let [c (JTextField. (str v))]     
-         {:label l, :widget c, :get #(.getText c), :set #(.setText c (str %))
+         {:info x, :label l, :widget c, :get #(.getText c), :set #(.setText c (str %))
 	 :adder (fn[panel]
 	    (.add panel l)
 	    (if (:file x)
@@ -47,7 +47,7 @@
     :combobox                    
 	(let [c (combobox-create (:set x))] 
 	 (combobox-set c v)
-	 {:label l, :widget (combobox-field c), :get #(combobox-get c), :set #(combobox-set c %)
+	 {:info x, :label l, :widget (combobox-field c), :get #(combobox-get c), :set #(combobox-set c %)
 	 :adder (fn[panel]
 	    (.add panel l)
 	    (.add panel (combobox-field c) "growx,wrap,span 2"))
@@ -108,6 +108,7 @@
 	(->> [:compile :upload :schedule :download :purge :remove] (map #(.setEnabled (% buttons) true)) (doall))
        )
      )
+     ;(doall (map (fn[[i x]] (.setText (:label x) (:label (:info x)))) fields2))
     )
     (do 
      (.setLabel (:create buttons) "Create")
