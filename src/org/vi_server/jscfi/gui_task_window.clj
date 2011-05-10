@@ -9,47 +9,56 @@
      (java.awt Event)
      (net.miginfocom.swing MigLayout)))
 
-
 (defn create-task-window [task jscfi]
  (let [
   panel (JPanel. (MigLayout. "", "[pref][grow][pref]", "[pref]7[grow]"))
   frame (JFrame.)
-  name-field        (JTextField.   (:name task))
-  status-field      (JLabel.       (str (:status task)))
-  outer-id-field    (JLabel.       (:pbs-id task))
-  source-file-field (JTextField.   (:source-file task))
-  source-mode-field (combobox-create (get-source-modes jscfi))
-  input-file-field  (JTextField.   (:input-file task))
-  output-file-field (JTextField.   (:output-file task))
-  node-count-field  (JTextField.   (str (:node-count task)))
-  walltime-field    (JTextField.   (str (:walltime task)))
+  fields [
+    {:label "Name:",         :type :textfield,      :tf :name, :regex #"^[a-zA-Z0-9_]{1,32}$"},
+    {:label "Status:",       :type :label,          :tf :status},
+    {:label "Task id:",      :type :label,          :tf :pbs-id},
+    {:label "Source file:",  :type :textfield-file, :tf :source-file},
+    {:label "Source mode:",  :type :combobox,       :tf :source-mode, :set (get-source-modes jscfi)},
+    {:label "Input file:",   :type :textfield-file, :tf :input-file},
+    {:label "Output file:",  :type :textfield-file, :tf :output-file},
+    {:label "Node count:",   :type :textfield,      :tf :node-count, :regex #"^[0-9]{1,10}$"},
+    {:label "Walltime:",     :type :textfield,      :tf :walltime, :regex #"^\d\d:\d\d:\d\d$"},
+  ]
+  fields2 (into {} (map (fn[x] [(:tf x) (let [v (get task (:tf x))] (case (:type x)
+   :label                                                           
+	(let [c (JLabel. (str v))] 
+	 {:widget c, :get #(.getText c), :set #(.setText c (str %))})
+   (:textfield :textfield-file) 
+	(let [c (JTextField. (str v))]     
+         {:widget c, :get #(.getText c), :set #(.setText c (str %))})
+   :combobox                    
+	(let [c (combobox-create (:set x))] 
+	 (combobox-set c v)
+	 {:widget (combobox-field c), :get #(combobox-get c), :set #(combobox-set c %)})
+   ))]) fields))
   task-id (atom (:id task))
+  update-ui-traits (fn[] "Updates various things like changed/not-changed or enabled/disabled things"
+   (if @task-id
+    nil
+    nil
+    )
+   )
   action-display (create-action "Debug Print" (fn [_] (prn (get-task jscfi @task-id)))
       { Action/SHORT_DESCRIPTION  "Display it", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) })
   action-create (create-action "Create/Change" (fn [_] 
-	  (let [
+	  (try (let [
 	   task (if @task-id (get-task jscfi @task-id) {})
-           newtask (-> task
-	      (assoc :name           (.getText name-field))
-	      (assoc :source-file    (.getText source-file-field))
-	      (assoc :source-mode    (combobox-get source-mode-field))
-	      (assoc :input-file     (.getText input-file-field))
-	      (assoc :output-file    (.getText output-file-field))
-	      (assoc :node-count     (.getText node-count-field))
-	      (assoc :walltime       (.getText walltime-field))
-	      )]
+           newtask (into task (map (fn[x] [x ((:get (get fields2 x)))])
+	    [:name :source-file :source-mode :input-file :output-file :node-count :walltime]))]
+	   (println "QQQ " task " QQ " newtask)
 	   (try
 	    (doall (map 
-	     #(when-not (re-find (:regex %) (get newtask (:field %)))
-	      (throw (Exception. (str (:caption %) " must match" (:regex %))))) [
-		   {:field :name,       :caption "Task name",  :regex #"^[a-zA-Z0-9_]{1,32}$"}
-		   {:field :node-count, :caption "Node count", :regex #"^[0-9]{1,10}$"}
-		   {:field :walltime,   :caption "Walltime",   :regex #"^\d\d:\d\d:\d\d$"}
-	    ]))
+	     #(when (:regex %) (when-not (re-find (:regex %) (get newtask (:tf %)))
+	      (throw (Exception. (str (:label %) " must match" (:regex %)))))) fields))
 	    (if @task-id
 	     (alter-task jscfi newtask)
 	     (swap! task-id (fn[_](register-task jscfi newtask))))
-	  (catch Exception e (println e) (msgbox (str e))))))
+	  (catch Exception e (println "pln1" e) (msgbox (str e))))) (catch Throwable e (println "pln5" e))))
       { Action/SHORT_DESCRIPTION  "Create/change a task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_ENTER Event/CTRL_MASK) })
 
   action-remove (create-action "Remove" (fn [_] (remove-task jscfi @task-id) (swap! task-id (fn[_]nil)))
@@ -69,16 +78,9 @@
       (something-changed [this] (SwingUtilities/invokeLater (fn []
 	(let [task (get-task jscfi @task-id)]
 	 (try
-          (.setText name-field         (str (:name task)))
-	  (.setText status-field       (str (:status task))) 
-          (.setText outer-id-field     (str (:pbs-id task))) 
-          (.setText source-file-field  (str (:source-file task)))
-          (.setText input-file-field   (str (:input-file task))) 
-          (.setText output-file-field  (str (:output-file task))) 
-          (.setText node-count-field   (str (:node-count task)))
-          (.setText walltime-field     (str (:walltime task)))
-	  (combobox-set source-mode-field (:source-mode task))
-	  (catch Exception e (println e)))
+	  (doall (map #((:set (get fields2 %)) (get task %)) 
+	    [:name :status :pbs-id :source-file :input-file :output-file :node-count :walltime :source-mode]))
+	  (catch Exception e (println "pln2" e)))
 	  )))))
   ]
   (doto frame 
@@ -98,21 +100,20 @@
    (.add (JButton. action-remove) "growx")
    (.revalidate))
   (doto panel
-   (.add (JLabel. "Name:"))          (.add name-field         "growx,wrap,span 2")
-   (.add (JLabel. "Status:"))        (.add status-field       "growx,wrap,span 2")
-   (.add (JLabel. "Task id:"))       (.add outer-id-field     "growx,wrap,span 2")
-   (.add (JLabel. "Source file:"))   (.add source-file-field  "growx") 
-				           (.add (create-file-chooser-button source-file-field :open) "wrap")
-   (.add (JLabel. "Source mode:"))   (.add (combobox-field source-mode-field)  "growx,wrap,span 2")
-   (.add (JLabel. "Input file:"))    (.add input-file-field   "growx")
-				           (.add (create-file-chooser-button input-file-field :open) "wrap")
-   (.add (JLabel. "Output file:"))   (.add output-file-field  "growx")
-				           (.add (create-file-chooser-button output-file-field :save) "wrap")
-   (.add (JLabel. "Node count:"))    (.add node-count-field   "growx,wrap,span 2")
-   (.add (JLabel. "Walltime:"))      (.add walltime-field     "growx,wrap,span 2")
+   (.add (JLabel. "Name:"))          (.add (:widget (:name fields2))         "growx,wrap,span 2")
+   (.add (JLabel. "Status:"))        (.add (:widget (:status fields2))       "growx,wrap,span 2")
+   (.add (JLabel. "Task id:"))       (.add (:widget (:pbs-id fields2))       "growx,wrap,span 2")
+   (.add (JLabel. "Source file:"))   (.add (:widget (:source-file fields2))  "growx") 
+				           (.add (create-file-chooser-button (:widget (:source-file fields2)) :open) "wrap")
+   (.add (JLabel. "Source mode:"))   (.add (:widget (:source-mode fields2))  "growx,wrap,span 2")
+   (.add (JLabel. "Input file:"))    (.add (:widget (:input-file fields2))   "growx")
+				           (.add (create-file-chooser-button (:widget (:input-file fields2)) :open) "wrap")
+   (.add (JLabel. "Output file:"))   (.add (:widget (:output-file fields2))  "growx")
+				           (.add (create-file-chooser-button (:widget (:output-file fields2)) :save) "wrap")
+   (.add (JLabel. "Node count:"))    (.add (:widget (:node-count fields2))   "growx,wrap,span 2")
+   (.add (JLabel. "Walltime:"))      (.add (:widget (:walltime fields2))     "growx,wrap,span 2")
    (.add button-panel "span 3")
    (.revalidate))
   (.setLocationRelativeTo frame nil)
   (add-observer jscfi observer)
-  (combobox-set source-mode-field (:source-mode task))
   frame))
