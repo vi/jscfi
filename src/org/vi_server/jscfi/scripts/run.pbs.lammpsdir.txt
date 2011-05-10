@@ -9,5 +9,6 @@ date >> log
 hostname >> log
 echo "PBS_O_WORKDIR=" >> log
 cp "$PBS_NODEFILE" pbs-nodes
-mpirun --hostfile `pwd`/pbs-nodes program 2> stderr > stdout
-date > completed
+cd source.c &&
+lmp_my < input.txt 2> stderr > stdout &&
+date > ../completed

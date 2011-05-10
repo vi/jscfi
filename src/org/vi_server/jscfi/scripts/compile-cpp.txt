@@ -1,0 +1,9 @@
+DIR="%s"
+TDIR="%s"
+mkdir -p jscfi/"$DIR"/"$TDIR" && 
+cd jscfi/"$DIR"/"$TDIR" && 
+rm -f program && 
+rm -f source.cpp &&
+mv source.c source.cpp &&
+mpic++ source.cpp -o program 2>&1; 
+echo -n $? > ret

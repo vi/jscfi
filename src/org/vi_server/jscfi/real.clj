@@ -202,7 +202,7 @@
     (get-tasks [this] (vals (:tasks @state-agent)) )
     (get-task [this id] (get (:tasks @state-agent) id) )
     (get-source-modes [this]
-     [:single-c-file :single-cpp-file :directory-with-a-makefile :single-lammps-file :single-shellscript-file])
+     [:single-c-file :single-cpp-file :directory-with-makefile :single-lammps-file :directory-with-lammps-file])
     (register-task [this task] (println "Task registered") (println task) (let [rnd-id (.toString (rand))] 
 	(send state-agent #(assoc % :tasks (persist-tasks (:session %) state-agent (assoc (:tasks %) rnd-id 
 	    (-> task (assoc :id rnd-id) (assoc :status :created))))))
@@ -223,7 +223,14 @@
        (.disconnect sftp))
       (println "Source code uploaded")
       (let [
-       compilation-result (ssh-execute session (read-script "compile.txt" directory (:id task)) nil)
+       script (get {
+	:single-c-file "compile.txt"
+	:single-cpp-file "compile-cpp.txt"
+	:directory-with-makefile "compile-dir.txt"
+	:single-lammps-file "compile-dummy.txt"
+	:directory-with-lammps-file "compile-lammps.txt"
+	} (:source-mode task) )
+       compilation-result (ssh-execute session (read-script script directory (:id task)) nil)
        compilation-ok (ssh-execute session (read-script "compile-ret.txt" directory (:id task)) nil)
        ]
        (println "Compilation:" compilation-ok)
@@ -237,9 +244,16 @@
      (println "Schedule task") 
      (let [task (get tasks task-id)]
       (let [
+       run-pbs-file (get {
+	:single-c-file "run.pbs.txt"
+	:single-cpp-file "run.pbs.txt"
+	:directory-with-makefile "run.pbs.txt"
+	:single-lammps-file "run.pbs.lammps.txt"
+	:directory-with-lammps-file "run.pbs.lammpsdir.txt"
+        } (:source-mode task))
        schedule-result (chomp (ssh-execute session 
 	   (read-script "schedule.txt" directory (:id task))
-	   (read-script "run.pbs.txt" (:walltime task) (:node-count task) (:name task) directory (:id task))))
+	   (read-script run-pbs-file (:walltime task) (:node-count task) (:name task) directory (:id task))))
        ]
        (println "Schedule id:" schedule-result)
        (if 

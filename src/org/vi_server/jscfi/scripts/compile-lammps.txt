@@ -1,0 +1,8 @@
+DIR="%s"
+TDIR="%s"
+mkdir -p jscfi/"$DIR"/"$TDIR" && 
+cd jscfi/"$DIR"/"$TDIR" && 
+rm -f program input.txt output.txt && 
+ln -s source.c input.txt &&
+ln -s source.c output.txt &&
+echo -n 0 > ret
