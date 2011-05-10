@@ -1,3 +1,9 @@
+jscfi-0.7:
+	1. Refactor a bit
+	2. Disabled buttons
+	3. Directory transfers
+	4. LAMMPS
+
 jscfi-0.6:
 	1. Don't hang on failed compilation
 
