@@ -54,12 +54,6 @@
 	 })
    ))]) fields))
   task-id (atom (:id task))
-  update-ui-traits (fn[] "Updates various things like changed/not-changed or enabled/disabled things"
-   (if @task-id
-    nil
-    nil
-    )
-   )
   action-display (create-action "Debug Print" (fn [_] (prn (get-task jscfi @task-id)))
       { Action/SHORT_DESCRIPTION  "Display it", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) })
   action-create (create-action "Create/Change" (fn [_] 
@@ -91,6 +85,22 @@
   action-purge (create-action "Purge" (fn [_] (purge-task jscfi @task-id))
       { Action/SHORT_DESCRIPTION  "Remove task files from server", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_P Event/CTRL_MASK) })
   button-panel (JPanel. (MigLayout. "", "[pref][pref]", "[grow]5"))
+  buttons {
+   :display (JButton. action-display),
+   :create (JButton. action-create),
+   :compile (JButton. action-compile),
+   :upload (JButton. action-upload),
+   :schedule (JButton. action-schedule),
+   :download (JButton. action-download),
+   :purge (JButton. action-purge),
+   :remove (JButton. action-remove),
+   }
+  update-ui-traits (fn[] "Updates various things like changed/not-changed or enabled/disabled things"
+   (if @task-id
+    nil
+    nil
+    )
+   )
   observer (reify JscfiObserver 
       (something-changed [this] (SwingUtilities/invokeLater (fn []
 	(let [task (get-task jscfi @task-id)]
@@ -107,14 +117,14 @@
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (remove-observer jscfi observer))))
    )
   (doto button-panel
-   (.add (JButton. action-display) "growx")
-   (.add (JButton. action-create) "growx")
-   (.add (JButton. action-compile) "growx")
-   (.add (JButton. action-upload) "growx,wrap")
-   (.add (JButton. action-schedule) "growx")
-   (.add (JButton. action-download) "growx")
-   (.add (JButton. action-purge) "growx")
-   (.add (JButton. action-remove) "growx")
+   (.add (:display buttons) "growx")
+   (.add (:create buttons) "growx")
+   (.add (:compile buttons) "growx")
+   (.add (:upload buttons) "growx,wrap")
+   (.add (:schedule buttons) "growx")
+   (.add (:download buttons) "growx")
+   (.add (:purge buttons) "growx")
+   (.add (:remove buttons) "growx")
    (.revalidate))
    (try 
    (doall (map (fn[x] ((:adder (get fields2 (:tf x))) panel)) fields))
