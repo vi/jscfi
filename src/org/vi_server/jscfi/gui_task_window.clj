@@ -14,27 +14,44 @@
   panel (JPanel. (MigLayout. "", "[pref][grow][pref]", "[pref]7[grow]"))
   frame (JFrame.)
   fields [
-    {:label "Name:",         :type :textfield,      :tf :name, :regex #"^[a-zA-Z0-9_]{1,32}$"},
-    {:label "Status:",       :type :label,          :tf :status},
-    {:label "Task id:",      :type :label,          :tf :pbs-id},
-    {:label "Source file:",  :type :textfield-file, :tf :source-file},
-    {:label "Source mode:",  :type :combobox,       :tf :source-mode, :set (get-source-modes jscfi)},
-    {:label "Input file:",   :type :textfield-file, :tf :input-file},
-    {:label "Output file:",  :type :textfield-file, :tf :output-file},
-    {:label "Node count:",   :type :textfield,      :tf :node-count, :regex #"^[0-9]{1,10}$"},
-    {:label "Walltime:",     :type :textfield,      :tf :walltime, :regex #"^\d\d:\d\d:\d\d$"},
+    {:label "Name:",         :type :textfield, :tf :name, :regex #"^[a-zA-Z0-9_]{1,32}$"},
+    {:label "Status:",       :type :label,     :tf :status},
+    {:label "Task id:",      :type :label,     :tf :pbs-id},
+    {:label "Source file:",  :type :textfield, :tf :source-file, :file :open},
+    {:label "Source mode:",  :type :combobox,  :tf :source-mode, :set (get-source-modes jscfi)},
+    {:label "Input file:",   :type :textfield, :tf :input-file, :file :open},
+    {:label "Output file:",  :type :textfield, :tf :output-file, :file :save},
+    {:label "Node count:",   :type :textfield, :tf :node-count, :regex #"^[0-9]{1,10}$"},
+    {:label "Walltime:",     :type :textfield, :tf :walltime, :regex #"^\d\d:\d\d:\d\d$"},
   ]
-  fields2 (into {} (map (fn[x] [(:tf x) (let [v (get task (:tf x))] (case (:type x)
-   :label                                                           
+  fields2 (into {} (map (fn[x] [(:tf x)
+   (let [v (get task (:tf x)), l (JLabel. (:label x))] (case (:type x)
+    :label                                                           
 	(let [c (JLabel. (str v))] 
-	 {:widget c, :get #(.getText c), :set #(.setText c (str %))})
-   (:textfield :textfield-file) 
+	 {:label l, :widget c, :get #(.getText c), :set #(.setText c (str %)),
+	 :adder (fn[panel]
+	    (.add panel l)
+	    (.add panel c "growx,wrap,span 2"))
+	 })
+    :textfield 
 	(let [c (JTextField. (str v))]     
-         {:widget c, :get #(.getText c), :set #(.setText c (str %))})
-   :combobox                    
+         {:label l, :widget c, :get #(.getText c), :set #(.setText c (str %))
+	 :adder (fn[panel]
+	    (.add panel l)
+	    (if (:file x)
+	     (do
+	      (.add panel c "growx") 
+	      (.add panel (create-file-chooser-button c (:file x)) "wrap"))
+	     (.add panel c "growx,wrap,span 2")))
+	 })
+    :combobox                    
 	(let [c (combobox-create (:set x))] 
 	 (combobox-set c v)
-	 {:widget (combobox-field c), :get #(combobox-get c), :set #(combobox-set c %)})
+	 {:label l, :widget (combobox-field c), :get #(combobox-get c), :set #(combobox-set c %)
+	 :adder (fn[panel]
+	    (.add panel l)
+	    (.add panel (combobox-field c) "growx,wrap,span 2"))
+	 })
    ))]) fields))
   task-id (atom (:id task))
   update-ui-traits (fn[] "Updates various things like changed/not-changed or enabled/disabled things"
@@ -99,19 +116,10 @@
    (.add (JButton. action-purge) "growx")
    (.add (JButton. action-remove) "growx")
    (.revalidate))
-  (doto panel
-   (.add (JLabel. "Name:"))          (.add (:widget (:name fields2))         "growx,wrap,span 2")
-   (.add (JLabel. "Status:"))        (.add (:widget (:status fields2))       "growx,wrap,span 2")
-   (.add (JLabel. "Task id:"))       (.add (:widget (:pbs-id fields2))       "growx,wrap,span 2")
-   (.add (JLabel. "Source file:"))   (.add (:widget (:source-file fields2))  "growx") 
-				           (.add (create-file-chooser-button (:widget (:source-file fields2)) :open) "wrap")
-   (.add (JLabel. "Source mode:"))   (.add (:widget (:source-mode fields2))  "growx,wrap,span 2")
-   (.add (JLabel. "Input file:"))    (.add (:widget (:input-file fields2))   "growx")
-				           (.add (create-file-chooser-button (:widget (:input-file fields2)) :open) "wrap")
-   (.add (JLabel. "Output file:"))   (.add (:widget (:output-file fields2))  "growx")
-				           (.add (create-file-chooser-button (:widget (:output-file fields2)) :save) "wrap")
-   (.add (JLabel. "Node count:"))    (.add (:widget (:node-count fields2))   "growx,wrap,span 2")
-   (.add (JLabel. "Walltime:"))      (.add (:widget (:walltime fields2))     "growx,wrap,span 2")
+   (try 
+   (doall (map (fn[x] ((:adder (get fields2 (:tf x))) panel)) fields))
+   (catch Throwable e (println e)))
+  (doto panel  
    (.add button-panel "span 3")
    (.revalidate))
   (.setLocationRelativeTo frame nil)
