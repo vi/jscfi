@@ -1,4 +1,4 @@
-GUI for uploading and starting tasks at BSU SCFI supercomputer.
+GUI for uploading and starting tasks at BSU SCPI supercomputer (or other Torque+MPI-based)
 Written in Clojure/Swing.
 
 Binary snapshots available at http://vi-server.org/pub/
