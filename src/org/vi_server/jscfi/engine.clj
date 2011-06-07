@@ -145,7 +145,7 @@
      (.printStackTrace e pw)
      (str sw)))
 
-(defmacro ^{:private true} rj-method [name add-args & new-state] 
+(defmacro ^{:private true} rj-method [name add-args & new-state] #_"For use inside JscfiImpl. Defines numerous parameters, handles exceptions. Implementatation should always return new status (for example, by finishing with call to 'newtasks'), otherwise it will spoil this session."
  `(~name  [~'this ~@add-args] 
      (when-let [~'err (agent-error ~'state-agent)]
       (println "Agent errror: ")
@@ -167,10 +167,10 @@
      nil))
 
 
-(defn exists-scheduled-tasks [tasks] 
+(defn exists-scheduled-tasks [tasks] "Check if there is a task which is scheduled or running"
  (> (apply + (map (fn[task] (if (contains? #{:scheduled :running} (:status task)) 1 0)) (vals tasks))) 0))
 
-(defmacro newtasks [tt] "For use inside rj-method"
+(defmacro newtasks [tt] "For use inside rj-method. Also persists tasks and emits the signal."
  `(assoc ~'state :tasks (persist-tasks ~'session ~'state-agent ~tt)))
 
 
@@ -195,14 +195,24 @@
 	  tasks-new (reduce (fn[col tid] 
 	    (assoc col tid (assoc (get tasks tid) :status :need-check-for-completedness))) tasks completed-task-ids)
 	  _ (println "Completed tasks:" completed-task-ids)
-	  tasks-new2 (into {} (map (fn[t] [(first t) (let [task (second t)]
-	    (if (= (:status task) :need-check-for-completedness)
-	     (let [
-	    check-result (ssh-execute session (read-script "check_completedness.txt" directory (:id task)) nil) 
-	    _ (println "Comleteness check for " (:id task) " (" (:pbs-id task) ",", (:status task), "): " check-result)
-	    task-new (-> task (assoc :completed-date check-result) (assoc :status (if (empty? check-result) :aborted :completed)))
-	    ] task-new)
-	     task))]) tasks-new))
+	  states-of-qstat-tasks (into {} (map (fn[x] [(:job-id x) (:job_state x)]) qstat))
+	  tasks-new2 (into {} (map (fn[t] [(first t) (let 
+	    [
+	    task (second t)
+	    task-new (if (= (:status task) :need-check-for-completedness) (let 
+	     [
+	     check-result (ssh-execute session (read-script "check_completedness.txt" directory (:id task)) nil) 
+	     _ (println "Comleteness check for " (:id task) " (" (:pbs-id task) ",", (:status task), "): " check-result)
+	     task-new-inner (-> task 
+		    (assoc :completed-date check-result) 
+		    (assoc :status (if (empty? check-result) :aborted :completed)))
+	     ] task-new-inner) task)
+	    task-new2 (if (and 
+		    (= (:status task-new) :scheduled) 
+		    (= (get states-of-qstat-tasks (:pbs-id task-new)) "R"))
+		(-> task-new (assoc :status :running))
+		task-new)
+	    ] task-new2)]) tasks-new))
 	  ]
 	  (newtasks tasks-new2)))
       state))
@@ -275,7 +285,7 @@
      (println "Call qdel for the task") 
      (let [task (get tasks task-id)]
         (ssh-execute session (read-script "cancel.txt" directory (:id task) (:pbs-id task)) nil)
-	(newtasks tasks)))
+	state))
     
     (rj-method purge-task (task-id) 
      (println "Purge task")
