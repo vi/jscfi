@@ -64,8 +64,10 @@
 	 })
    ))]) fields))
   task-id (atom (:id task))
+
   action-display (create-action "Debug Print" (fn [_] (prn (get-task jscfi @task-id)))
-      { Action/SHORT_DESCRIPTION  "Display it", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) })
+      { Action/SHORT_DESCRIPTION  "Display it"})
+
   action-create (create-action "Create/Change" (fn [_] 
 	  (try (let [
 	   task (if @task-id (get-task jscfi @task-id) {})
@@ -80,24 +82,32 @@
 	     (alter-task jscfi newtask)
 	     (swap! task-id (fn[_](register-task jscfi newtask))))
 	  (catch Exception e (println "pln1" e) (msgbox (str e))))) (catch Throwable e (println "pln5" e))))
-      { Action/SHORT_DESCRIPTION  "Create/change a task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_ENTER Event/CTRL_MASK) })
+      { Action/SHORT_DESCRIPTION  "Create/change a task"})
 
   action-remove (create-action "Remove" (fn [_] (remove-task jscfi @task-id) (swap! task-id (fn[_]nil)))
-      { Action/SHORT_DESCRIPTION  "Remove the task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_D Event/CTRL_MASK) })
+      { Action/SHORT_DESCRIPTION  "Remove the task"})
+
   action-compile (create-action "Compile" (fn [_] (compile-task jscfi @task-id))
-      { Action/SHORT_DESCRIPTION  "Upload the source code and compile the task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK) })
+      { Action/SHORT_DESCRIPTION  "Upload the source code and compile the task"})
+
   action-upload (create-action "Upload" (fn [_] (upload-task jscfi @task-id))
-      { Action/SHORT_DESCRIPTION  "Upload the input data as input.txt", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_U Event/CTRL_MASK) })
+      { Action/SHORT_DESCRIPTION  "Upload the input data as input.txt"})
+
   action-schedule (create-action "Schedule" (fn [_] (schedule-task jscfi @task-id))
-      { Action/SHORT_DESCRIPTION  "Schedule the task for execution", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_F Event/CTRL_MASK) })
+      { Action/SHORT_DESCRIPTION  "Schedule the task for execution"})
+
   action-download (create-action "Download" (fn [_] (download-task jscfi @task-id))
-      { Action/SHORT_DESCRIPTION  "Download output.txt", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_D Event/CTRL_MASK) })
+      { Action/SHORT_DESCRIPTION  "Download output.txt"})
+
   action-purge (create-action "Purge" (fn [_] (purge-task jscfi @task-id))
-      { Action/SHORT_DESCRIPTION  "Remove task files from server", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_P Event/CTRL_MASK) })
+      { Action/SHORT_DESCRIPTION  "Remove task files from server"})
+
   action-cancel (create-action "Cancel" (fn [_] (cancel-task jscfi @task-id))
-      { Action/SHORT_DESCRIPTION  "Call \"qdel\" to unschedule the task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_E Event/CTRL_MASK) })
+      { Action/SHORT_DESCRIPTION  "Call \"qdel\" to unschedule the task"})
+
   action-nodesstats (create-action "Nodes stats" (fn [_] (nodes-stats jscfi @task-id))
-      { Action/SHORT_DESCRIPTION  "Show info about nodes the task is running on", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_S Event/CTRL_MASK) })
+      { Action/SHORT_DESCRIPTION  "Show info about nodes the task is running on"})
+
   button-panel (JPanel. (MigLayout. "", "[pref][pref]", "[grow]5"))
   buttons {
    :display (JButton. action-display),
