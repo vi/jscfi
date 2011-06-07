@@ -262,6 +262,13 @@
         (newtasks (assoc tasks (:id task)
 	    (-> task (assoc :status :scheduled) (assoc :pbs-id schedule-result)))))
      )))
+
+    (rj-method cancel-task (task-id) 
+     (println "Call qdel for the task") 
+     (let [task (get tasks task-id)]
+        (ssh-execute session (read-script "cancel.txt" directory (:id task) (:pbs-id task)) nil)
+        (newtasks (assoc tasks (:id task)
+	    (-> task (assoc :status :compiled) (assoc :pbs-id nil))))))
     
     (rj-method purge-task (task-id) 
      (println "Purge task")
