@@ -84,6 +84,8 @@
       { Action/SHORT_DESCRIPTION  "Download output.txt", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_D Event/CTRL_MASK) })
   action-purge (create-action "Purge" (fn [_] (purge-task jscfi @task-id))
       { Action/SHORT_DESCRIPTION  "Remove task files from server", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_P Event/CTRL_MASK) })
+  action-cancel (create-action "Cancel" (fn [_] (cancel-task jscfi @task-id))
+      { Action/SHORT_DESCRIPTION  "Call \"qdel\" to unschedule the task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_E Event/CTRL_MASK) })
   button-panel (JPanel. (MigLayout. "", "[pref][pref]", "[grow]5"))
   buttons {
    :display (JButton. action-display),
@@ -94,6 +96,7 @@
    :download (JButton. action-download),
    :purge (JButton. action-purge),
    :remove (JButton. action-remove),
+   :cancel (JButton. action-cancel),
    }
   update-ui-traits (fn[] "Updates various things like changed/not-changed or enabled/disabled things"
    (if @task-id
@@ -101,11 +104,35 @@
      (.setLabel (:create buttons) "Save changes")
      (if (contains? #{:created :purged} (:status (get-task jscfi @task-id)))
        (do
-	(->> [:compile :purge :remove] (map #(.setEnabled (% buttons) true)) (doall))
-	(->> [:upload :download :schedule] (map #(.setEnabled (% buttons) false)) (doall))
+	(->> [:compile :remove] (map #(.setEnabled (% buttons) true)) (doall))
+	(->> [:upload :purge :download :schedule :cancel] (map #(.setEnabled (% buttons) false)) (doall))
        )
-       (do
-	(->> [:compile :upload :schedule :download :purge :remove] (map #(.setEnabled (% buttons) true)) (doall))
+       (if (contains? #{:compiled} (:status (get-task jscfi @task-id)))
+        (do
+	 (->> [:schedule :upload :purge :compile] (map #(.setEnabled (% buttons) true)) (doall))
+	 (->> [:download :remove :cancel] (map #(.setEnabled (% buttons) false)) (doall))
+        )
+	(if (contains? #{:scheduled} (:status (get-task jscfi @task-id)))
+	 (do
+	  (->> [:cancel] (map #(.setEnabled (% buttons) true)) (doall))
+	  (->> [:compile :download :upload :schedule :purge :remove] (map #(.setEnabled (% buttons) false)) (doall))
+	 )
+	 (if (contains? #{:running} (:status (get-task jscfi @task-id)))
+	  (do
+	   (->> [] (map #(.setEnabled (% buttons) true)) (doall))
+	   (->> [:compile :download :cancel :upload :schedule :purge :remove] (map #(.setEnabled (% buttons) false)) (doall))
+	  )
+	  (if (contains? #{:completed} (:status (get-task jscfi @task-id)))
+	   (do
+	    (->> [:compile :download :upload :schedule :purge] (map #(.setEnabled (% buttons) true)) (doall))
+	    (->> [:remove :cancel] (map #(.setEnabled (% buttons) false)) (doall))
+	   )
+	   (do
+	    (->> [:remove :cancel :compile :download :upload :schedule :purge] (map #(.setEnabled (% buttons) true)) (doall))
+	   )
+	  )
+	 )
+	)
        )
      )
      ;(doall (map (fn[[i x]] (.setText (:label x) (:label (:info x)))) fields2))
@@ -126,7 +153,7 @@
 	  )))))
   ]
   (doto frame 
-   (.setSize 600 380)
+   (.setSize 600 400)
    (.setContentPane panel)
    (.setTitle "Jscfi task")
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (remove-observer jscfi observer))))
@@ -139,7 +166,8 @@
    (.add (:schedule buttons) "growx")
    (.add (:download buttons) "growx")
    (.add (:purge buttons) "growx")
-   (.add (:remove buttons) "growx")
+   (.add (:remove buttons) "growx,wrap")
+   (.add (:cancel buttons) "growx")
    (.revalidate))
    (try 
    (doall (map (fn[x] ((:adder (get fields2 (:tf x))) panel)) fields))
