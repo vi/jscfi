@@ -1,5 +1,5 @@
-(ns org.vi-server.jscfi.real
- "Real Jscfi that interacts with with SSH"
+(ns org.vi-server.jscfi.engine
+ "Jscfi interface implementation. Interacts with with SSH and does all functions."
  (:use clojure.walk)
  (:use [clojure.set :only [difference intersection]])
  (:use org.vi-server.jscfi.jscfi)
@@ -175,7 +175,7 @@
 
 
 (expand-first #{rj-method} 
- (deftype RealJscfi [state-agent] Jscfi
+ (deftype JscfiImpl [state-agent] Jscfi
     (rj-method periodic-update ()
       (if (and connected (exists-scheduled-tasks tasks))
 	(let [
@@ -343,7 +343,7 @@
 ))
 
 
-(defn get-real-jscfi [] (new RealJscfi (agent {
+(defn get-jscfi-engine [] (new JscfiImpl (agent {
     :observers #{},
     :auth-observer nil,
     :tasks {},
