@@ -9,6 +9,15 @@
      (java.awt Event)
      (net.miginfocom.swing MigLayout)))
 
+(def button-enabledness-per-status {
+ :created      #{:compile :remove},
+ :purged       #{:compile :remove},
+ :compiled     #{:compile :schedule :upload :purge},
+ :scheduled    #{:cancel},
+ :running      #{},
+ :completed    #{:compile :download :upload :schedule :purge}, 
+})
+
 (defn create-task-window [task jscfi]
  (let [
   panel (JPanel. (MigLayout. "", "[pref][grow][pref]", "[pref]7[grow]"))
@@ -102,38 +111,13 @@
    (if @task-id
     (do 
      (.setLabel (:create buttons) "Save changes")
-     (if (contains? #{:created :purged} (:status (get-task jscfi @task-id)))
-       (do
-	(->> [:compile :remove] (map #(.setEnabled (% buttons) true)) (doall))
-	(->> [:upload :purge :download :schedule :cancel] (map #(.setEnabled (% buttons) false)) (doall))
-       )
-       (if (contains? #{:compiled} (:status (get-task jscfi @task-id)))
-        (do
-	 (->> [:schedule :upload :purge :compile] (map #(.setEnabled (% buttons) true)) (doall))
-	 (->> [:download :remove :cancel] (map #(.setEnabled (% buttons) false)) (doall))
-        )
-	(if (contains? #{:scheduled} (:status (get-task jscfi @task-id)))
-	 (do
-	  (->> [:cancel] (map #(.setEnabled (% buttons) true)) (doall))
-	  (->> [:compile :download :upload :schedule :purge :remove] (map #(.setEnabled (% buttons) false)) (doall))
-	 )
-	 (if (contains? #{:running} (:status (get-task jscfi @task-id)))
-	  (do
-	   (->> [] (map #(.setEnabled (% buttons) true)) (doall))
-	   (->> [:compile :download :cancel :upload :schedule :purge :remove] (map #(.setEnabled (% buttons) false)) (doall))
-	  )
-	  (if (contains? #{:completed} (:status (get-task jscfi @task-id)))
-	   (do
-	    (->> [:compile :download :upload :schedule :purge] (map #(.setEnabled (% buttons) true)) (doall))
-	    (->> [:remove :cancel] (map #(.setEnabled (% buttons) false)) (doall))
-	   )
-	   (do
-	    (->> [:remove :cancel :compile :download :upload :schedule :purge] (map #(.setEnabled (% buttons) true)) (doall))
-	   )
-	  )
-	 )
-	)
-       )
+     (let [
+      ts (get button-enabledness-per-status (:status (get-task jscfi @task-id)))
+      ts2 (if ts ts #{:compile :download :cancel :upload :schedule :purge :remove})
+      ]
+      (->> [:compile :download :cancel :upload :schedule :purge :remove] 
+       (map #(.setEnabled (% buttons) (contains? ts2 %))) 
+       (doall))
      )
      ;(doall (map (fn[[i x]] (.setText (:label x) (:label (:info x)))) fields2))
     )
