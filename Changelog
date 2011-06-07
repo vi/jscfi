@@ -1,3 +1,9 @@
+jscfi-0.8:
+	1. Can now unschedule tasks: "Cancel" button
+	2. More disabled buttons depending on task states.
+	3. New task states: ":aborted" and ":running".
+	4. Can now request resources usage statistics from a running task.
+
 jscfi-0.7:
 	1. Refactor a bit
 	2. Disabled buttons
