@@ -17,6 +17,23 @@
     (toString [this] (format "%s    %s    %s    %s" (:status task) (:source-file task) (:name task) (:pbs-id task)))
     (task [this] task))
 
+(defn create-textinfo-window [text]
+ (let [
+  panel (JPanel. (MigLayout. "", "[grow]", "[grow]"))
+  frame (JFrame.)
+  textarea (JTextArea.)
+  ]
+  (doto frame 
+   (.setSize 600 400)
+   (.setContentPane panel)
+   (.setLocationRelativeTo nil)
+   (.setTitle "Text info"))
+  (.setText textarea text)
+  (doto panel
+   (.add (JScrollPane. textarea) "grow")
+   (.revalidate))
+  frame))
+
 (defn create-main-window [jscfi] 
  (let [
   panel (JPanel. (MigLayout. "", "[grow][pref][pref]", "[grow]"))
@@ -51,6 +68,8 @@
       (connected [this] (.setVisible frame true))
       (compilation-failed [this task message] 
 	(msgbox (str (:name task) "\n" message)))
+      (text-info [this task message] 
+	(.setVisible (create-textinfo-window (str "Text info for task " (:name task) ":\n\n" message)) true))
       (something-changed [this] (SwingUtilities/invokeLater (fn [](.actionPerformed action-refresh nil))))
   )
   ]

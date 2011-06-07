@@ -8,6 +8,7 @@
 (defprotocol JscfiObserver
     "Callbacks from Jscfi object"
     (compilation-failed [this task text])
+    (text-info [this task text])
     (connected [this]) ; dup from auth-observer's auth-succeed
     (something-changed [this])
 )
@@ -53,6 +54,8 @@
     (resume-task [this task-id])
     (download-task [this task-id])
     (purge-task [this task-id])
+
+    (nodes-stats [this task-id])
 
     (get-source-modes [this]) ;; return the list like [:single-c-file :single-cpp-file :directory-with-a-makefile :single-lammps-file :single-shellscript-file]
 

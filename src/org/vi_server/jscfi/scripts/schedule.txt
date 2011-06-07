@@ -3,5 +3,5 @@ TDIR="%s"
 mkdir -p jscfi/"$DIR"/"$TDIR" && 
 cd jscfi/"$DIR"/"$TDIR" && 
 cat > run.pbs && 
-rm -f completed &&
+rm -f completed pbs-nodes &&
 qsub run.pbs

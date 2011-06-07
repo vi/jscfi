@@ -311,6 +311,15 @@
        (ssh-download sftp (format "jscfi/%s/%s/output.txt" directory (:id task)) (:output-file task))
        (.disconnect sftp))
       (println "Output file downloaded")) state)
+    
+    (rj-method nodes-stats (task-id) 
+     (println "Collect stats about nodes the task is running on") 
+     (let [
+      task (get tasks task-id)
+      result (ssh-execute session (read-script "nodes_stats.txt" directory (:id task) (:pbs-id task)) nil)
+      ]
+        (emit text-info task result)
+	state))
 
     (rj-method add-observer (observer_) (assoc state :observers (conj observers observer_)))
     (rj-method remove-observer (observer_) (assoc state :observers (disj observers observer_)))

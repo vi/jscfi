@@ -15,7 +15,7 @@
  :compiled     #{:compile :schedule :upload :purge},
  :aborted      #{:compile :schedule :upload :purge :download},
  :scheduled    #{:cancel},
- :running      #{},
+ :running      #{:nodes-stats},
  :completed    #{:compile :download :upload :schedule :purge}, 
 })
 
@@ -96,6 +96,8 @@
       { Action/SHORT_DESCRIPTION  "Remove task files from server", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_P Event/CTRL_MASK) })
   action-cancel (create-action "Cancel" (fn [_] (cancel-task jscfi @task-id))
       { Action/SHORT_DESCRIPTION  "Call \"qdel\" to unschedule the task", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_E Event/CTRL_MASK) })
+  action-nodesstats (create-action "Nodes stats" (fn [_] (nodes-stats jscfi @task-id))
+      { Action/SHORT_DESCRIPTION  "Show info about nodes the task is running on", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_S Event/CTRL_MASK) })
   button-panel (JPanel. (MigLayout. "", "[pref][pref]", "[grow]5"))
   buttons {
    :display (JButton. action-display),
@@ -107,6 +109,7 @@
    :purge (JButton. action-purge),
    :remove (JButton. action-remove),
    :cancel (JButton. action-cancel),
+   :nodes-stats (JButton. action-nodesstats),
    }
   update-ui-traits (fn[] "Updates various things like changed/not-changed or enabled/disabled things"
    (if @task-id
@@ -114,9 +117,9 @@
      (.setLabel (:create buttons) "Save changes")
      (let [
       ts (get button-enabledness-per-status (:status (get-task jscfi @task-id)))
-      ts2 (if ts ts #{:compile :download :cancel :upload :schedule :purge :remove})
+      ts2 (if ts ts #{:compile :download :cancel :upload :schedule :purge :remove :nodes-stats})
       ]
-      (->> [:compile :download :cancel :upload :schedule :purge :remove] 
+      (->> [:compile :download :cancel :upload :schedule :purge :remove :nodes-stats] 
        (map #(.setEnabled (% buttons) (contains? ts2 %))) 
        (doall))
      )
@@ -153,6 +156,7 @@
    (.add (:purge buttons) "growx")
    (.add (:remove buttons) "growx,wrap")
    (.add (:cancel buttons) "growx")
+   (.add (:nodes-stats buttons) "growx")
    (.revalidate))
    (try 
    (doall (map (fn[x] ((:adder (get fields2 (:tf x))) panel)) fields))
