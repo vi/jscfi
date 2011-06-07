@@ -13,6 +13,7 @@
  :created      #{:compile :remove},
  :purged       #{:compile :remove},
  :compiled     #{:compile :schedule :upload :purge},
+ :aborted      #{:compile :schedule :upload :purge :download},
  :scheduled    #{:cancel},
  :running      #{},
  :completed    #{:compile :download :upload :schedule :purge}, 

@@ -168,7 +168,7 @@
 
 
 (defn exists-scheduled-tasks [tasks] 
- (> (apply + (map (fn[task] (if (= (:status task) :scheduled) 1 0)) (vals tasks))) 0))
+ (> (apply + (map (fn[task] (if (contains? #{:scheduled :running} (:status task)) 1 0)) (vals tasks))) 0))
 
 (defmacro newtasks [tt] "For use inside rj-method"
  `(assoc ~'state :tasks (persist-tasks ~'session ~'state-agent ~tt)))
@@ -185,7 +185,7 @@
 	 (println "Periodic qstat")
 	 (let [
 	  pbs-id-to-task-id-map (reduce (fn[col task] 
-		(if (:pbs-id task) (assoc col (:pbs-id task) (:id task)) col)) {} (vals tasks))
+		(if (and (:pbs-id task) (contains? #{:running :scheduled} (:status task))) (assoc col (:pbs-id task) (:id task)) col)) {} (vals tasks))
 	  pbs-ids-still-present-in-qstat (map (fn[x] (:job-id x)) qstat)
 
 	  #_"When the task disappears from qstat it means it's completed" 
@@ -193,10 +193,18 @@
 	  completed-task-ids (set (map #(get pbs-id-to-task-id-map %) completed-pbs-ids))
 
 	  tasks-new (reduce (fn[col tid] 
-	    (assoc col tid (assoc (get tasks tid) :status :completed))) tasks completed-task-ids)
+	    (assoc col tid (assoc (get tasks tid) :status :need-check-for-completedness))) tasks completed-task-ids)
+	  _ (println "Completed tasks:" completed-task-ids)
+	  tasks-new2 (into {} (map (fn[t] [(first t) (let [task (second t)]
+	    (if (= (:status task) :need-check-for-completedness)
+	     (let [
+	    check-result (ssh-execute session (read-script "check_completedness.txt" directory (:id task)) nil) 
+	    _ (println "Comleteness check for " (:id task) " (" (:pbs-id task) ",", (:status task), "): " check-result)
+	    task-new (-> task (assoc :completed-date check-result) (assoc :status (if (empty? check-result) :aborted :completed)))
+	    ] task-new)
+	     task))]) tasks-new))
 	  ]
-	  (println "Completed tasks:" completed-task-ids)
-	  (newtasks tasks-new)))
+	  (newtasks tasks-new2)))
       state))
 
     (get-tasks [this] (vals (:tasks @state-agent)) )
@@ -267,8 +275,7 @@
      (println "Call qdel for the task") 
      (let [task (get tasks task-id)]
         (ssh-execute session (read-script "cancel.txt" directory (:id task) (:pbs-id task)) nil)
-        (newtasks (assoc tasks (:id task)
-	    (-> task (assoc :status :compiled) (assoc :pbs-id nil))))))
+	(newtasks tasks)))
     
     (rj-method purge-task (task-id) 
      (println "Purge task")
