@@ -1,0 +1,58 @@
+digraph G {
+        fontname = "Bitstream Vera Sans"
+        fontsize = 8
+
+        node [
+                fontname = "Bitstream Vera Sans"
+                fontsize = 14
+                shape = "record"
+        ]
+
+        edge [
+                fontname = "Bitstream Vera Sans"
+                fontsize = 14
+        ]
+
+	subgraph clusterExt {
+            label="Внешние компоненты"
+	    fontsize=12
+	    rank=same
+	    jsch [
+		label = <jsch<br/><font point-size="10">Библиотека для<br/>подключения к SSH</font>>
+	    ]
+	    
+	    Swing [
+		    label = <Java Swing<br/><font point-size="10">Библиотека для<br/>графических интерфейсов</font>>
+	    ]
+	}
+
+	subgraph clusterJscfi {
+	    label="Jscfi"
+	    fontsize=12
+
+	    iface [
+		    shape = ellipse
+		    label = "Интерфейс между ядром\nи пользовательским интерфейсом"
+		    fontsize=12
+	    ]
+	{rank=same
+	    core [
+		    label = "Ядро"
+	    ]
+
+	    UI [
+		    label = "Пользовательский интерфейс"
+	    ]
+	}
+
+	}
+
+
+        edge [ arrowhead = "none" ]
+	jsch -> core 
+	iface -> UI
+	UI -> Swing
+
+        edge [  arrowhead = "empty" ]
+	core -> iface
+}
