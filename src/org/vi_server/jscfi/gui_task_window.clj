@@ -41,34 +41,43 @@
     :label                                                           
 	(let [c (JLabel. (str v))] 
 	 {:info x, :label l, :widget c, :get #(.getText c), :set #(.setText c (str %)),
-	 :adder (fn[panel]
+	 :adder (fn[panel onch]
 	    (.add panel l)
 	    (.add panel c "growx,wrap,span 2"))
 	 })
     :textfield 
 	(let [c (JTextField. (str v))]     
          {:info x, :label l, :widget c, :get #(.getText c), :set #(.setText c (str %))
-	 :adder (fn[panel]
+	 :adder (fn[panel on-changed]
 	    (.add panel l)
 	    (if (:file x)
 	     (do
 	      (.add panel c "growx") 
 	      (.add panel (create-file-chooser-button c (:file x)) "wrap"))
-	     (.add panel c "growx,wrap,span 2")))
+	     (.add panel c "growx,wrap,span 2"))
+        (.addDocumentListener (.getDocument c) (proxy [javax.swing.event.DocumentListener] [] 
+                                                (changedUpdate [e] (on-changed))
+                                                (insertUpdate [e] (on-changed))
+                                                (removeUpdate [e] (on-changed))
+                                                ))
+        )
 	 })
     :combobox                    
 	(let [c (combobox-create (:set x))] 
 	 (combobox-set c v)
 	 {:info x, :label l, :widget (combobox-field c), :get #(combobox-get c), :set #(combobox-set c %)
-	 :adder (fn[panel]
+	 :adder (fn[panel on-changed]
 	    (.add panel l)
-	    (.add panel (combobox-field c) "growx,wrap,span 2"))
+	    (.add panel (combobox-field c) "growx,wrap,span 2")
+        (.addItemListener (combobox-field c) (proxy [java.awt.event.ItemListener] []
+                                              (itemStateChanged [event] (on-changed))))
+       )
 	 })
    ))]) fields))
   task-id (atom (:id task))
 
-  action-display (create-action "Debug Print" (fn [_] (prn (get-task jscfi @task-id)))
-      { Action/SHORT_DESCRIPTION  "Display it"})
+  action-display (create-action "debugpr" (fn [_] (prn (get-task jscfi @task-id)))
+      { Action/SHORT_DESCRIPTION  "Display contents of internal task structure to stdout"})
 
   action-create (create-action "Create/Change" (fn [_] 
 	  (try (let [
@@ -85,6 +94,10 @@
 	     (swap! task-id (fn[_](register-task jscfi newtask))))
 	  (catch Exception e (println "pln1" e) (msgbox (str e))))) (catch Throwable e (println "pln5" e))))
       { Action/SHORT_DESCRIPTION  "Create/change a task"})
+  
+  reread-task-info2 (atom nil)          #_ "Will be filled in with reread-task-info function defined below"
+  action-revert (create-action "Undo" (fn [_] (@reread-task-info2))
+      { Action/SHORT_DESCRIPTION  "Revert edits to the task"})
 
   action-remove (create-action "Remove" (fn [_] (remove-task jscfi @task-id) (swap! task-id (fn[_]nil)))
       { Action/SHORT_DESCRIPTION  "Remove the task"})
@@ -122,6 +135,7 @@
    :remove (JButton. action-remove),
    :cancel (JButton. action-cancel),
    :nodes-stats (JButton. action-nodesstats),
+   :revert (JButton. action-revert),
    }
   update-ui-traits (fn[] "Updates various things like changed/not-changed or enabled/disabled things"
    (if @task-id
@@ -131,7 +145,7 @@
       ts (get button-enabledness-per-status (:status (get-task jscfi @task-id)))
       ts2 (if ts ts #{:compile :download :cancel :upload :schedule :purge :remove :nodes-stats})
       ]
-      (->> [:compile :download :cancel :upload :schedule :purge :remove :nodes-stats] 
+      (->> [:compile :download :cancel :upload :schedule :purge :remove :nodes-stats :revert] 
        (map #(.setEnabled (% buttons) (contains? ts2 %))) 
        (doall))
      )
@@ -142,15 +156,25 @@
      (->> [:compile :upload :schedule :download :purge :remove] (map #(.setEnabled (% buttons) false)) (doall))
     )
    ))
-  observer (reify JscfiObserver 
-      (something-changed [this] (SwingUtilities/invokeLater (fn []
+  reread-task-info (fn []
 	(let [task (get-task jscfi @task-id)]
 	 (try
 	  (doall (map #((:set (get fields2 %)) (get task %)) 
 	    [:name :status :pbs-id :source-file :input-file :output-file :node-count :walltime :source-mode]))
 	  (update-ui-traits)
 	  (catch Exception e (println "pln2" e)))
-	  )))))
+  ))
+  _ (swap! reread-task-info2 (fn[_] reread-task-info)) #_ "Fill in reread-task-info2 above for action-revert"
+  disable-buttons-per-edit (fn[]
+    (try
+        (doall (map #(.setEnabled (% buttons) false) [:compile :download :cancel :upload :schedule :purge :remove]))
+        (doall (map #(.setEnabled (% buttons) true)  [:revert]))
+        (catch Exception e (println "dbpe Exc: " e))
+    )
+  )
+
+  observer (reify JscfiObserver 
+      (something-changed [this] (SwingUtilities/invokeLater reread-task-info)))
   ]
   (doto frame 
    (.setSize 600 400)
@@ -169,9 +193,10 @@
    (.add (:remove buttons) "growx,wrap")
    (.add (:cancel buttons) "growx")
    (.add (:nodes-stats buttons) "growx")
+   (.add (:revert buttons) "growx")
    (.revalidate))
    (try 
-   (doall (map (fn[x] ((:adder (get fields2 (:tf x))) panel)) fields))
+   (doall (map (fn[x] ((:adder (get fields2 (:tf x))) panel disable-buttons-per-edit)) fields))
    (catch Throwable e (println e)))
   (doto panel  
    (.add button-panel "span 3")
