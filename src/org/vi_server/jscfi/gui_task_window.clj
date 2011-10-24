@@ -31,7 +31,9 @@
     {:label "Source mode:",  :type :combobox,  :tf :source-mode, :set (get-source-modes jscfi)},
     {:label "Input file:",   :type :textfield, :tf :input-file, :file :open},
     {:label "Output file:",  :type :textfield, :tf :output-file, :file :save},
-    {:label "Node count:",   :type :textfield, :tf :node-count, :regex #"^[0-9]{1,10}(:ppn=[1-8])?$"},
+    {:label "Node count/list:",   :type :textfield, :tf :node-count,
+            :regex #"^([0-9]{1,10}(:ppn=[1-8])?)|(nopbs:[0-9_1\-\.a-zA-Z]+(?:,[0-9_\-\.a-zA-Z]+)*)$"},
+            #_ "       node count                node list  "
     {:label "Walltime:",     :type :textfield, :tf :walltime, :regex #"^\d\d:\d\d:\d\d$"},
   ]
   fields2 (into {} (map (fn[x] [(:tf x)

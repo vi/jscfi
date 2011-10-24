@@ -3,5 +3,19 @@ TDIR="%s"
 mkdir -p jscfi/"$DIR"/"$TDIR" && 
 cd jscfi/"$DIR"/"$TDIR" && 
 cat > run.pbs && 
-rm -f completed pbs-nodes &&
-qsub run.pbs
+rm -f completed pbs-nodes;
+if grep 'nopbs:' run.pbs > /dev/null; then
+    # don't use PBS now
+
+    perl -ne '/nopbs:(.*)/ and print join "\n", (split ",", $1) and print "\n";' run.pbs > pbs-nodes.tmp
+    ID=`date +%%s`
+    (
+        echo "$ID" >> ../ad-hoc-tasks
+        PBS_O_WORKDIR=`pwd` PBS_NODEFILE=`pwd`/pbs-nodes.tmp  bash run.pbs
+        perl -ne "print unless /^$ID$/" ../ad-hoc-tasks > ../ad-hoc-tasks.tmp
+        mv ../ad-hoc-tasks.tmp  ../ad-hoc-tasks
+    ) > stdout2 2> stderr2 < /dev/null &
+    echo "$ID"
+else
+    qsub run.pbs
+fi

@@ -1,1 +1,3 @@
+DIR="%s"
 qstat -f1
+perl -pe 's/(.*)/Job Id: $1\n    job_state = R\n\n/' jscfi/"$DIR"/ad-hoc-tasks

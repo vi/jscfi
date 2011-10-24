@@ -179,7 +179,7 @@
     (rj-method periodic-update ()
       (if (and connected (exists-scheduled-tasks tasks))
 	(let [
-	 tasklist (ssh-execute session (read-script "qstat.txt") nil)
+	 tasklist (ssh-execute session (read-script "qstat.txt" directory) nil)
 	 qstat (interpret-task-list tasklist)
 	 ]
 	 (println "Periodic qstat")
