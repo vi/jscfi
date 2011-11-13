@@ -42,7 +42,7 @@
        (msgbox "Directory should match ^[A-Za-z0-9_]{1,32}$"))) {})
   ]
   (doto frame 
-   (.setSize 400 240)
+   (.setSize 400 250)
    (.setContentPane panel)
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (exit-if-needed))))
    (.setTitle "Login to SCFI")
