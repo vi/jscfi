@@ -3,7 +3,7 @@ TDIR="%s"
 mkdir -p jscfi/"$DIR"/"$TDIR" && 
 cd jscfi/"$DIR"/"$TDIR" && 
 cat > run.pbs && 
-rm -f completed pbs-nodes;
+rm -f completed pbs-nodes timing;
 if grep 'nopbs:' run.pbs > /dev/null; then
     # don't use PBS now
 

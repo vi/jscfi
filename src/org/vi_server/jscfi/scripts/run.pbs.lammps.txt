@@ -10,5 +10,5 @@ hostname >> log
 echo "PBS_O_WORKDIR=" >> log
 cp "$PBS_NODEFILE" pbs-nodes
 NP=`wc -l pbs-nodes | awk '{print $1}'`
-LD_LIBRARY_PATH=/share/mvapich-gcc/lib/shared/ time /share/mvapich-gcc/bin/mpirun_rsh -np $NP -hostfile `pwd`/pbs-nodes /home/shukela/bin/lmp_my < source.c 2> stderr > stdout
+LD_LIBRARY_PATH=/share/mvapich-gcc/lib/shared/ /usr/bin/time -f '%%e' -o timing /share/mvapich-gcc/bin/mpirun_rsh -np $NP -hostfile `pwd`/pbs-nodes /home/shukela/bin/lmp_my < source.c 2> stderr > stdout
 date > completed

@@ -35,6 +35,7 @@
             :regex #"^([0-9]{1,10}(:ppn=[1-8])?)|(nopbs:[0-9_1\-\.a-zA-Z]+(?:,[0-9_\-\.a-zA-Z]+)*)$"},
             #_ "       node count                node list  "
     {:label "Walltime:",     :type :textfield, :tf :walltime, :regex #"^\d\d:\d\d:\d\d$"},
+    {:label "Last run time:", :type :label, :tf :last-timing},
   ]
   fields2 (into {} (map (fn[x] [(:tf x)
    (let [v (get task (:tf x)), l (JLabel. (:label x))] (case (:type x)
@@ -160,7 +161,8 @@
 	(let [task (get-task jscfi @task-id)]
 	 (try
 	  (doall (map #((:set (get fields2 %)) (get task %)) 
-	    [:name :status :pbs-id :source-file :input-file :output-file :node-count :walltime :source-mode]))
+	    [:name :status :pbs-id :source-file :input-file 
+         :output-file :node-count :walltime :source-mode :last-timing]))
 	  (update-ui-traits)
 	  (catch Exception e (println "pln2" e)))
   ))
@@ -177,7 +179,7 @@
       (something-changed [this] (SwingUtilities/invokeLater reread-task-info)))
   ]
   (doto frame 
-   (.setSize 600 400)
+   (.setSize 600 450)
    (.setContentPane panel)
    (.setTitle "Jscfi task")
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (remove-observer jscfi observer))))

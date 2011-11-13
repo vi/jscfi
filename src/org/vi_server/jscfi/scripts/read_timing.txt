@@ -1,0 +1,5 @@
+DIR="%s"
+TDIR="%s"
+mkdir -p jscfi/"$DIR"/"$TDIR" && 
+cd jscfi/"$DIR"/"$TDIR" && 
+cat timing | tr '\n' ';' | sed 's/;$//'

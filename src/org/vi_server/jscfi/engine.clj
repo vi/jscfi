@@ -203,8 +203,10 @@
 	     [
 	     check-result (ssh-execute session (read-script "check_completedness.txt" directory (:id task)) nil) 
 	     _ (println "Comleteness check for " (:id task) " (" (:pbs-id task) ",", (:status task), "): " check-result)
+	     timing (ssh-execute session (read-script "read_timing.txt" directory (:id task)) nil) 
 	     task-new-inner (-> task 
 		    (assoc :completed-date check-result) 
+		    (assoc :last-timing timing) 
 		    (assoc :status (if (empty? check-result) :aborted :completed)))
 	     ] task-new-inner) task)
 	    task-new2 (if (and 
