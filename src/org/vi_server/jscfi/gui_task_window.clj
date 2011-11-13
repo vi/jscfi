@@ -37,6 +37,11 @@
     {:label "Walltime:",     :type :textfield, :tf :walltime, :regex #"^\d\d:\d\d:\d\d$"},
     {:label "Last run time:", :type :label, :tf :last-timing},
   ]
+  fields-to-update-when-reread-tasks [:name :status :pbs-id :source-file :input-file 
+         :output-file :node-count :walltime :source-mode :last-timing]
+  fields-to-consider-in-save-task [:name :source-file :source-mode :input-file 
+         :output-file :node-count :walltime]
+
   fields2 (into {} (map (fn[x] [(:tf x)
    (let [v (get task (:tf x)), l (JLabel. (:label x))] (case (:type x)
     :label                                                           
@@ -84,7 +89,7 @@
 	  (try (let [
 	   task (if @task-id (get-task jscfi @task-id) {})
            newtask (into task (map (fn[x] [x ((:get (get fields2 x)))])
-	    [:name :source-file :source-mode :input-file :output-file :node-count :walltime]))]
+	    fields-to-consider-in-save-task))]
 	   (println "QQQ " task " QQ " newtask)
 	   (try
 	    (doall (map 
@@ -161,8 +166,7 @@
 	(let [task (get-task jscfi @task-id)]
 	 (try
 	  (doall (map #((:set (get fields2 %)) (get task %)) 
-	    [:name :status :pbs-id :source-file :input-file 
-         :output-file :node-count :walltime :source-mode :last-timing]))
+	    fields-to-update-when-reread-tasks))
 	  (update-ui-traits)
 	  (catch Exception e (println "pln2" e)))
   ))
