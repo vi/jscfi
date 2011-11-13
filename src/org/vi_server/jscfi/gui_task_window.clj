@@ -11,6 +11,7 @@
 
 (def button-enabledness-per-status {
  :created      #{:compile :remove},
+ :compilation-failed #{:compile :purge},
  :purged       #{:compile :remove},
  :compiled     #{:compile :schedule :upload :purge},
  :aborted      #{:compile :schedule :upload :purge :download},

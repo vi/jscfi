@@ -255,9 +255,11 @@
        ]
        (println "Compilation:" compilation-ok)
        (if 
-	(not= compilation-ok "0")
-	(do (emit compilation-failed task compilation-result) state)
-        (newtasks (assoc tasks (:id task) (-> task (assoc :status :compiled)))))
+	     (not= compilation-ok "0")
+	     (do (emit compilation-failed task compilation-result) 
+           (newtasks (assoc tasks (:id task) (-> task (assoc :status :compilation-failed))))
+         )
+         (newtasks (assoc tasks (:id task) (-> task (assoc :status :compiled)))))
      )))
 
     (rj-method schedule-task (task-id) 
