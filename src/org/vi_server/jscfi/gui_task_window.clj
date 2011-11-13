@@ -37,9 +37,10 @@
             #_ "       node count                node list  "
     {:label "Walltime:",     :type :textfield, :tf :walltime, :regex #"^\d\d:\d\d:\d\d$"},
     {:label "Last run time:", :type :label, :tf :last-timing},
+    {:label "Completed date:", :type :label, :tf :completed-date},
   ]
   fields-to-update-when-reread-tasks [:name :status :pbs-id :source-file :input-file 
-         :output-file :node-count :walltime :source-mode :last-timing]
+         :output-file :node-count :walltime :source-mode :last-timing :completed-date]
   fields-to-consider-in-save-task [:name :source-file :source-mode :input-file 
          :output-file :node-count :walltime]
 

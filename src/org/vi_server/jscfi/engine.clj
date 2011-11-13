@@ -221,8 +221,14 @@
 
     (get-tasks [this] (vals (:tasks @state-agent)) )
     (get-task [this id] (get (:tasks @state-agent) id) )
-    (get-source-modes [this]
-     [:single-c-file :single-cpp-file :directory-with-makefile :single-lammps-file :directory-with-lammps-file])
+    (get-source-modes [this] [
+     :single-c-file
+     :single-cpp-file
+     :directory-with-makefile
+     :directory-with-makefile-make-run
+     :single-lammps-file
+     :directory-with-lammps-file
+     ])
     (register-task [this task] (println "Task registered") (println task) (let [rnd-id (.toString (rand))] 
 	(send state-agent #(assoc % :tasks (persist-tasks (:session %) state-agent (assoc (:tasks %) rnd-id 
 	    (-> task (assoc :id rnd-id) (assoc :status :created))))))
@@ -246,7 +252,8 @@
        script (get {
 	:single-c-file "compile.txt"
 	:single-cpp-file "compile-cpp.txt"
-	:directory-with-makefile "compile-dir.txt"
+	:directory-with-makefile          "compile-dir.txt"
+	:directory-with-makefile-make-run "compile-dir.txt"
 	:single-lammps-file "compile-dummy.txt"
 	:directory-with-lammps-file "compile-lammps.txt"
 	} (:source-mode task) )
@@ -270,6 +277,7 @@
 	:single-c-file "run.pbs.txt"
 	:single-cpp-file "run.pbs.txt"
 	:directory-with-makefile "run.pbs.txt"
+	:directory-with-makefile-make-run "run.pbs.makerun.txt"
 	:single-lammps-file "run.pbs.lammps.txt"
 	:directory-with-lammps-file "run.pbs.lammpsdir.txt"
         } (:source-mode task))
