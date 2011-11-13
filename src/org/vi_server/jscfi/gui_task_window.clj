@@ -44,9 +44,58 @@
          :output-file :node-count :walltime :source-mode :last-timing :completed-date :cmdadd]
   fields-to-consider-in-save-task [:name :source-file :source-mode :input-file 
          :output-file :node-count :walltime :cmdadd]
+  tooltips {
+    :name "The name of this task, as will be reported tp PBS"
+    :status "<html>
+        Status of the task:<br/>
+        :created - freshly created<br/>
+        :compiled - successfully compiled<br/>
+        :compilation-failed<br/>
+        :sceduled - currently in PBS queue (or just recently added)<br/>
+        :running - currently executing<br/>
+        :completed - Finished executing (may be failed)<br/>
+        :aborted - Aborted execution<br/>
+        :purged - Files for this task have been deleted from server<br/>
+        </html>"
+    :pbs-id "ID of this task in PBS (or PID on server in nobps mode)"
+    :source-file "File or directory to upload to server and compile (depends on source-mode)"
+    :source-mode "<html>Mode of compilation and running:<br/>
+         :single-c-file - Single C MPI file<br/>
+         :single-cpp-file - Single C++ MPI file<br/>
+         :directory-with-makefile - Directory with C/C++ MPI files and Makefile to build program<br/>
+         :directory-with-makefile-make-run - Directory with C/C++ [MPI] files and Makefile with \"run\" target<br/>
+            &nbsp;&nbsp;The \"run\" target should not be the first<br/>
+         :single-lammps-file - Single file, input to LAMMPS<br/>
+         :directory-with-lammps-file - Directory with \"input.txt\" file (input for LAMMPS) that can depend on other files in it<br/>
+         </html>"
+    :input-file "<html>Local path for input file or directory (will be accessible as 
+            \"input.txt\" (even directory) for target program
+            <br/>For LAMMPS it will be merged into the source directory</html>"
+    :output-file "Local path for output file (or directory) to download from server (from \"output.txt\")"
+    :node-count "<html>
+        Either node count (possibly with \":ppn={number}\" appended) or node list (sets \"nopbs\" mode)<br/>
+        Examples:<br/>
+        3 - Three nodes, one (?) process per node<br/>
+        3:ppn=4 - Three nodes, 4 processes per node (total 12 instances of the application)<br/>
+        nopbs:node-040,node-041 - Start application without PBS, two instances on nodes node-040 and node-041.
+        </html>"
+    :walltime "Time this application is allowed to run (observed by PBS)"
+    :cmdadd "<html>Additional command-line parameters<br/>
+        For most modes it is additional parameters to \"mpirun\" command<br/>
+        For :directory-with-makefile-make-run mode it is additional parameters for \"make run\" command<br/>
+        For LAMMPS modes it is additional parameter for lmp
+        </html>"
+    :last-timing "<html>Time (in seconds) of the last run attempt.<br/>
+        If failed (exit code > 0) then \"Command exited with non-zero status {number};\" is prepended.</html>"
+    :completed-date "Date and time (on server) of the last task finish (successfull or not)"
+  }
 
   fields2 (into {} (map (fn[x] [(:tf x)
-   (let [v (get task (:tf x)), l (JLabel. (:label x))] (case (:type x)
+   (let [
+        v (get task (:tf x)),
+        l (JLabel. (:label x)),
+        _ (.setToolTipText l (get tooltips (:tf x) ""))
+        ] (case (:type x)
     :label                                                           
 	(let [c (JLabel. (str v))] 
 	 {:info x, :label l, :widget c, :get #(.getText c), :set #(.setText c (str %)),
