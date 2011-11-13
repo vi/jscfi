@@ -283,7 +283,7 @@
         } (:source-mode task))
        schedule-result (chomp (ssh-execute session 
 	   (read-script "schedule.txt" directory (:id task))
-	   (read-script run-pbs-file (:walltime task) (:node-count task) (:name task) directory (:id task))))
+	   (read-script run-pbs-file (:walltime task) (:node-count task) (:name task) directory (:id task) (:cmdadd task))))
        ]
        (println "Schedule id:" schedule-result)
        (if 

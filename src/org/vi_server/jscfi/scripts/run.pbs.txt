@@ -9,5 +9,5 @@ date >> log
 hostname >> log
 echo "PBS_O_WORKDIR=" >> log
 cp "$PBS_NODEFILE" pbs-nodes
-/usr/bin/time -f '%%e' -o timing mpirun --hostfile `pwd`/pbs-nodes program 2> stderr > stdout
+/usr/bin/time -f '%%e' -o timing mpirun --hostfile `pwd`/pbs-nodes program %s 2> stderr > stdout
 date > completed
