@@ -1,3 +1,10 @@
+jscfi-1.0:
+	1. Remembering the last task execution time (and exit status)
+	2. "Compilation failed" status (to prevent messing with failed source files on server)
+	3. New source mode: directory with "make run" Makefile to start the application
+	4. Ability to specify additional command-line parameters
+	5. Tooltips for field labels
+
 jscfi-0.9:
 	1. Can run without PBS by specifying "nopbs:node1,node2,node3" insead of the node count.
 	2. Buttons are disabled unless changes to field saved.
