@@ -1,3 +1,7 @@
+jscfi-1.1:
+	1. "Terminate task" feature
+	2. Task window title is task name
+
 jscfi-1.0:
 	1. Remembering the last task execution time (and exit status)
 	2. "Compilation failed" status (to prevent messing with failed source files on server)
