@@ -332,6 +332,14 @@
       ]
         (emit text-info task result)
 	state))
+    
+    (rj-method terminate-task (task-id) 
+     (println "Terminating mpiruns and all our tasks in our nodes") 
+     (let [
+      task (get tasks task-id)
+      result (ssh-execute session (read-script "terminate-task.txt" directory (:id task) (:pbs-id task)) nil)
+      ]
+	state))
 
     (rj-method add-observer (observer_) (assoc state :observers (conj observers observer_)))
     (rj-method remove-observer (observer_) (assoc state :observers (disj observers observer_)))

@@ -16,7 +16,7 @@
  :compiled     #{:compile :schedule :upload :purge},
  :aborted      #{:compile :schedule :upload :purge :download},
  :scheduled    #{:cancel},
- :running      #{:nodes-stats},
+ :running      #{:nodes-stats, :terminate},
  :completed    #{:compile :download :upload :schedule :purge}, 
 })
 
@@ -180,6 +180,9 @@
 
   action-nodesstats (create-action "Nodes stats" (fn [_] (nodes-stats jscfi @task-id))
       { Action/SHORT_DESCRIPTION  "Show info about nodes the task is running on"})
+  
+  action-terminate (create-action "Terminate task" (fn [_] (terminate-task jscfi @task-id))
+      { Action/SHORT_DESCRIPTION  "Kill all user's processes on nodes and mpirun"})
 
   button-panel (JPanel. (MigLayout. "", "[pref][pref]", "[grow]5"))
   buttons {
@@ -194,6 +197,7 @@
    :cancel (JButton. action-cancel),
    :nodes-stats (JButton. action-nodesstats),
    :revert (JButton. action-revert),
+   :terminate (JButton. action-terminate),
    }
   update-ui-traits (fn[] "Updates various things like changed/not-changed or enabled/disabled things"
    (if @task-id
@@ -201,9 +205,9 @@
      (.setLabel (:create buttons) "Save changes")
      (let [
       ts (get button-enabledness-per-status (:status (get-task jscfi @task-id)))
-      ts2 (if ts ts #{:compile :download :cancel :upload :schedule :purge :remove :nodes-stats})
+      ts2 (if ts ts #{:compile :download :cancel :upload :schedule :purge :remove :nodes-stats :terminate})
       ]
-      (->> [:compile :download :cancel :upload :schedule :purge :remove :nodes-stats :revert] 
+      (->> [:compile :download :cancel :upload :schedule :purge :remove :nodes-stats :revert :terminate] 
        (map #(.setEnabled (% buttons) (contains? ts2 %))) 
        (doall))
      )
@@ -211,7 +215,7 @@
     )
     (do 
      (.setLabel (:create buttons) "Create")
-     (->> [:compile :upload :schedule :download :purge :remove] (map #(.setEnabled (% buttons) false)) (doall))
+     (->> [:compile :upload :schedule :download :purge :remove :terminate] (map #(.setEnabled (% buttons) false)) (doall))
     )
    ))
   reread-task-info (fn []
@@ -252,6 +256,7 @@
    (.add (:cancel buttons) "growx")
    (.add (:nodes-stats buttons) "growx")
    (.add (:revert buttons) "growx")
+   (.add (:terminate buttons) "growx")
    (.revalidate))
    (try 
    (doall (map (fn[x] ((:adder (get fields2 (:tf x))) panel disable-buttons-per-edit)) fields))
