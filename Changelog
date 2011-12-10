@@ -1,6 +1,7 @@
 jscfi-1.1:
 	1. "Terminate task" feature
 	2. Task window title is task name
+	3. No duplicated nodes in "node stats"
 
 jscfi-1.0:
 	1. Remembering the last task execution time (and exit status)
