@@ -212,6 +212,7 @@
        (doall))
      )
      ;(doall (map (fn[[i x]] (.setText (:label x) (:label (:info x)))) fields2))
+     (.setTitle frame (:name (get-task jscfi @task-id)))
     )
     (do 
      (.setLabel (:create buttons) "Create")
