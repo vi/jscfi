@@ -1,0 +1,1 @@
+cat $HOME/jscfi/bin/VERSION || printf -- 0

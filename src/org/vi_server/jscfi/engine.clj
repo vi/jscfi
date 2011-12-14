@@ -11,14 +11,35 @@
  (:import (java.io ByteArrayInputStream File))
  )  
 
+(defn read-script-noformat [script-name] 
+ (slurp (ClassLoader/getSystemResourceAsStream 
+	 (str "org/vi_server/jscfi/scripts/" script-name))))
+
 (defn read-script [script-name & args] 
- (apply format (slurp (ClassLoader/getSystemResourceAsStream 
-	 (str "org/vi_server/jscfi/scripts/" script-name))) args))
+ (apply format (read-script-noformat script-name) args))
 
 (defn serialise [object]
  (binding [*print-dup* true] (with-out-str (prn object))))
 
 (defn deserialise [string] (read-string string))
+
+(defn ssh-execute-output [session command input-str output]
+ (println "ssh-execute-output" command)
+ (try
+  (let [
+   channel (.openChannel session "exec")
+   input (if input-str (java.io.ByteArrayInputStream. (.getBytes input-str)) nil)
+   ]
+   (println "ssh-execute-output stage 2")
+   (doto channel
+    (.setOutputStream output)
+    (.setExtOutputStream System/err)
+    (.setInputStream input)
+    (.setCommand command)
+    (.connect 3000))
+   (println "ssh-execute-output progress"))
+  (catch Exception e (.printStackTrace e) (println "ssh-execute fail" e) nil)))
+
 
 (defn ^String ssh-execute [session command input-str]
  (println "ssh-execute" command)
@@ -340,6 +361,14 @@
       result (ssh-execute session (read-script "terminate-task.txt" directory (:id task) (:pbs-id task)) nil)
       ]
 	state))
+    
+    (rj-method stat-collector (task-id) 
+     (println "Node stat collector") 
+     (let [
+      task (get tasks task-id)
+      result (ssh-execute-output session (read-script "stat-collector.txt" directory (:id task) (:pbs-id task)) nil System/out)
+      ]
+	state))
 
     (rj-method add-observer (observer_) (assoc state :observers (conj observers observer_)))
     (rj-method remove-observer (observer_) (assoc state :observers (disj observers observer_)))
@@ -379,6 +408,20 @@
 	     (auth-succeed auth-observer)
 	     (emit-impl state-agent #(connected %))
 	     (emit-impl state-agent #(something-changed %))
+         (try
+          (let [scripts-version-number "1"]
+           (when (not= (ssh-execute session (read-script "check-scripts-version.txt") nil) scripts-version-number)
+            (println "Uploading some scripts to server")
+            (ssh-execute session (read-script "upload-scripts-prepare.txt") 
+                (read-script "upload-scripts.sh"
+                    scripts-version-number
+                    (read-script-noformat "fdlinecombine.c")
+                    (read-script-noformat "nodestatworker")
+                    (read-script-noformat "diststatcollect")))
+            (println "Finished uploading")))
+           (catch Exception e
+	        (println e)
+	        (connection-stage auth-observer (.toString e))))
 	     (let [tasks (interpret-tasks (ssh-execute session (read-script "read-tasks.txt" directory) nil))]
 	      (-> state 
 	       (assoc :connected true) 
@@ -388,7 +431,7 @@
 	       (assoc :directory directory)
 	      ))
 	     (catch Exception e 
-	      (.printStackTrace e)
+	      (println e)
 	      (auth-failed auth-observer)
 	      (connection-stage auth-observer (.toString e))
 	      state)

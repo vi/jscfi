@@ -1,0 +1,28 @@
+#!/bin/bash
+
+file="$1"
+true ${file:=pbs-nodes}
+
+JB=$HOME/jscfi/bin
+
+if [ ! -x $JB/fdlinecombine ]; then
+    if [ ! -f $JB/fdlinecombine.c ]; then
+        echo "Failed to find or compile fdlinecombine" >&2
+        exit 2
+    else
+        gcc -O2 $JB/fdlinecombine.c -o $JB/fdlinecombine || exit 1;
+    fi
+fi
+if [ ! -x $JB/nodestatworker ]; then
+    chmod +x  $JB/nodestatworker || echo "Warning: nodestatworker is not found/executable" >&2;
+fi
+
+SSH_LIST=`cat "$file" | sort | uniq | tr '\n' ' ' | sed 's!\([^ ]\+\)!<(ssh "\1" "$HOME/jscfi/bin/nodestatworker" < /dev/null)!g'
+`;
+# SSH_LIST is like "<(ssh "node-040" "$HOME/jscfi/bin/nodestatworker" < /dev/null) <(ssh "node-041" "$HOME/jscfi/bin/nodestatworker" < /dev/null)"
+
+#echo "SEPARATOR=<(printf '===.\n') $HOME/bin/fdlinecombine $SSH_LIST" >&2
+exec bash -c "SEPARATOR=<(printf '===.\n') exec $HOME/bin/fdlinecombine $SSH_LIST"
+~
+~
+

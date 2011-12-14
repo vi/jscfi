@@ -1,0 +1,2 @@
+# execute upload-scripts.sh with filled in files
+bash -

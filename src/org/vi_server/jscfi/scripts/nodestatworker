@@ -1,0 +1,87 @@
+#!/usr/bin/perl -w
+
+use strict;
+use Time::HiRes qw(gettimeofday);
+
+# Use current user id to filter process
+our $target_user_id = $<;
+our $header = `hostname | tr -d '\n'`;
+
+# poll info once per 1 second
+our $period = 4;
+
+$| = 1;
+
+# our $banned_cmdlines=qr/bash|nodeworker|sshd/;
+
+sub readfile($) {
+    my $filename = shift;
+    open F, "<", $filename or return "";
+    my $ret = join '', <F>;
+    close F;
+    return $ret;
+}
+
+sub escape_cmdline($) {
+    $_ = shift;
+    s!\\!\\\\!g;
+    s! !\\ !g;
+    s!\t!\\t!g;
+    s!\n!\\n!g;
+    s!\0! !g;
+    return $_;
+}
+
+sub shrink_io($) {
+    $_ = shift;
+    s/(\w+): (\d+)/$1=$2/g;
+    s/\n/ /g;
+    return $_;
+}
+
+sub enumerate_processes() {
+    my @ret=();
+
+    # enumerate all processes
+    foreach (</proc/[0-9]*>) {
+        my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat;
+        next unless $uid;
+        next unless $uid == $target_user_id;  # skip if not target user's process
+
+        my $pid;
+        m!/proc/(\d+)! and $pid = $1 or next;
+
+        # next if $pid == $$;  # skip this script from process list
+
+        push @ret, $pid;
+    }
+    
+    return @ret;
+}
+
+our @pids_to_watch;
+
+while(1) {
+
+    # execution time is about 50 ms
+    @pids_to_watch = enumerate_processes();
+
+    my $t = gettimeofday();
+    print "$header $t -1 ===\n";
+
+    foreach my $pid (@pids_to_watch) {
+        my $cmdline = readfile("/proc/$pid/cmdline");
+        # next if $cmdline =~ $banned_cmdlines;
+        print "$header $t $pid cmd: ",escape_cmdline($cmdline),"\n";
+        print "$header $t $pid stat: ",readfile("/proc/$pid/stat");
+        print "$header $t $pid statm: ",readfile("/proc/$pid/statm");
+        my $io = readfile("/proc/$pid/io");
+        print "$header $t $pid io: ",shrink_io($io),"\n";
+        print "$header $t $pid .\n"
+    }
+    print "$header $t -1 ===.\n";
+
+    select undef,undef,undef,$period;
+}
+
+
