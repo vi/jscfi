@@ -183,7 +183,7 @@
   
   action-terminate (create-action "Terminate task" (fn [_] (terminate-task jscfi @task-id))
       { Action/SHORT_DESCRIPTION  "Kill all user's processes on nodes and mpirun"})
-
+  
   button-panel (JPanel. (MigLayout. "", "[pref][pref]", "[grow]5"))
   buttons {
    :display (JButton. action-display),
@@ -249,13 +249,13 @@
    (.add (:display buttons) "growx")
    (.add (:create buttons) "growx")
    (.add (:compile buttons) "growx")
-   (.add (:upload buttons) "growx,wrap")
-   (.add (:schedule buttons) "growx")
+   (.add (:upload buttons) "growx")
+   (.add (:schedule buttons) "growx,wrap")
    (.add (:download buttons) "growx")
    (.add (:purge buttons) "growx")
-   (.add (:remove buttons) "growx,wrap")
+   (.add (:remove buttons) "growx")
    (.add (:cancel buttons) "growx")
-   (.add (:nodes-stats buttons) "growx")
+   (.add (:nodes-stats buttons) "growx,wrap")
    (.add (:revert buttons) "growx")
    (.add (:terminate buttons) "growx")
    (.revalidate))
