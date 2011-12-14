@@ -9,6 +9,43 @@
      (java.awt Event)
      (net.miginfocom.swing MigLayout)))
 
+
+(defn nat-traversal [host1 port1 host2 port2]
+  (println host1 port1 host2 port2) 
+  (loop [] 
+   (try
+    (let [
+        forwarder (fn[is os knock] 
+         (println "Port-forwarded direction opened")
+         (let [buffer (byte-array 65536)]
+          (loop [knocked false]
+           (let [ret (.read is buffer)]
+              (when (> ret 0)
+               (.write os buffer 0 ret)
+               (.flush os)
+               (when-not knocked (knock))
+               (recur true)))))
+         (.close os)
+         (.close is)
+         (println "Port-forwarded direction closed"))
+        socket1 (java.net.Socket.), socket2 (java.net.Socket.)]
+      (.connect socket1 (java.net.InetSocketAddress. host1 port1))
+      (.connect socket2 (java.net.InetSocketAddress. host2 port2))
+      (println "Port-forwarded connection establised")
+      (let [
+        is1 (.getInputStream socket1)
+        is2 (.getInputStream socket2)
+        os1 (.getOutputStream socket1)
+        os2 (.getOutputStream socket2)
+        ]
+        (.start (Thread. (fn[]
+           (forwarder is2 os1 (fn[])))))
+       (forwarder is1 os2 (fn[]))
+      ))
+    (catch Exception e (println e)))
+   (Thread/sleep 10000) 
+   (recur)))
+
 (defn create-authentication-window [jscfi]
  (let [
   panel (JPanel. (MigLayout. "", "[][grow][pref]", "[grow]5[grow][grow]"))
@@ -20,6 +57,7 @@
   keyfile-field (JTextField. (.get prefs "keyfile" ""))
   hostsfile-field (JTextField. (.get prefs "known_hosts" ""))
   directory-field (JTextField. (.get prefs "directory" "default"))
+  nat-traversal-field (JTextField. (.get prefs "nat_traverse" "78.138.100.25:5588:217.21.43.14:22"))
   connstage-label (JLabel.)
   auth-observer (reify AuthObserver
       (get-password [this] (.getText password-field))
@@ -40,9 +78,25 @@
       (if (re-find #"^[A-Za-z0-9_]{1,32}$" (.getText directory-field))
        (connect jscfi auth-observer (.getText server-field) (.getText user-field) (.getText directory-field))
        (msgbox "Directory should match ^[A-Za-z0-9_]{1,32}$"))) {})
+  action-nat (create-action "Set" (fn [_] 
+    (let [q (agent nil), line (.getText nat-traversal-field)]
+     (send q (fn[_]
+      (try
+       (let [rr (re-find #"(.+):(\d+):(.+):(\d+)" line)]
+        (when rr
+         (let [
+            host1 (get rr 1)
+            port1 (Integer/parseInt (get rr 2))
+            host2 (get rr 3)
+            port2 (Integer/parseInt (get rr 4))
+            ]
+            (.put prefs "nat_traverse" line)
+            (nat-traversal host1 port1 host2 port2))))
+       (catch Exception e (println e)))))))
+    {Action/SHORT_DESCRIPTION  "Connect to both hosts and exchange data"})
   ]
   (doto frame 
-   (.setSize 400 250)
+   (.setSize 430 315)
    (.setContentPane panel)
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (exit-if-needed))))
    (.setTitle "Login to SCFI")
@@ -67,6 +121,10 @@
    
    (.add (JLabel. "Directory:"))
    (.add directory-field "growx,wrap,span 2")
+   
+   (.add (JLabel. "NAT traversal:"))
+   (.add nat-traversal-field "growx")
+   (.add (JButton. action-nat) "wrap")
 
    (.add connstage-label "span 2,wrap")
    (.add (JButton. action-connect) "span 2")
