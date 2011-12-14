@@ -384,7 +384,14 @@
 		(try (.addIdentity jsch (get-keyfile auth-observer)) (catch Exception e (.printStackTrace e))))
 	    _2 (when (not= (get-hostsfile auth-observer) "")
 		(try (.setKnownHosts jsch (get-hostsfile auth-observer)) (catch Exception e (.printStackTrace e))))
-	    session (.getSession jsch username address 22)
+        session (let [
+         try-to-figure-port-number (re-find #"(.*):(\d+)" address)
+         hostport (if try-to-figure-port-number
+             (try {:host (get try-to-figure-port-number 1), :port (Integer/parseInt (get try-to-figure-port-number 2))}
+              (catch Exception e (.printStackTrace e) {:host address, :port 22}))
+             {:host address, :port 22})
+         ]
+	     (.getSession jsch username (:host hostport) (:port hostport)))
 	    password-attempts (atom 0)
 	    ui (proxy [UserInfo UIKeyboardInteractive][]
 		(promptYesNo               [message] 
