@@ -1,6 +1,6 @@
 (defproject 
    jscfi
-   "1.1-SNAPSHOT" 
+   "1.2-SNAPSHOT" 
    :description "GUI for uploading MPI programs into PBS-controlled servers" 
    :dependencies [[org.clojure/clojure "1.3.0-alpha4"]
                   [org.clojure/clojure-contrib "1.2.0"]

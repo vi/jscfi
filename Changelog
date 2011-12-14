@@ -1,3 +1,7 @@
+jscfi-1.2:
+	1. Monitoring infrastucture (notestatworker/fdlinecombine/diststatcollect)
+	2. NAT traversal feature
+
 jscfi-1.1:
 	1. "Terminate task" feature
 	2. Task window title is task name
