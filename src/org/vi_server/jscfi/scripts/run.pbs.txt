@@ -9,5 +9,13 @@ date >> log
 hostname >> log
 echo "PBS_O_WORKDIR=" >> log
 cp "$PBS_NODEFILE" pbs-nodes
+
+echo "server `date +%%s.%%N` -1 task_started" >> stat
+$HOME/jscfi/bin/diststatcollect pbs-nodes >> stat &
+STATCOLLECT_PID=$!
+
 /usr/bin/time -f '%%e' -o timing mpirun --hostfile `pwd`/pbs-nodes program %s 2> stderr > stdout
 date > completed
+
+kill $STATCOLLECT_PID
+echo "server `date +%%s.%%N` -1 task_stopped" >> stat

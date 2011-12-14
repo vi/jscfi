@@ -10,5 +10,13 @@ hostname >> log
 echo "PBS_O_WORKDIR=" >> log
 cp "$PBS_NODEFILE" pbs-nodes
 NP=`wc -l pbs-nodes | awk '{print $1}'`
+
+echo "server `date +%%s.%%N` -1 task_started" >> stat
+$HOME/jscfi/bin/diststatcollect pbs-nodes >> stat &
+STATCOLLECT_PID=$!
+
 LD_LIBRARY_PATH=/share/mvapich-gcc/lib/shared/ /usr/bin/time -f '%%e' -o timing /share/mvapich-gcc/bin/mpirun_rsh -np $NP -hostfile `pwd`/pbs-nodes /home/shukela/bin/lmp_my %s < source.c 2> stderr > stdout
 date > completed
+
+kill $STATCOLLECT_PID
+echo "server `date +%%s.%%N` -1 task_stopped" >> stat
