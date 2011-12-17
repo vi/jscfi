@@ -347,6 +347,17 @@
        (.disconnect sftp))
       (println "Output file downloaded")
       (emit message task (format "Output file[s] downloaded to %s" (:output-file task)))
+     ) state)
+
+    (rj-method download-all-task (task-id) 
+     (println "Downloading output file") 
+     (let [task (get tasks task-id)]
+      (let [sftp (.openChannel session "sftp")]
+       (.connect sftp 3000)
+       (ssh-download sftp (format "jscfi/%s/%s/" directory (:id task)) (str (:output-file task) ".all"))
+       (.disconnect sftp))
+      (println "Output file downloaded")
+      (emit message task (format "All task file[s] downloaded to %s.all" (:output-file task)))
       ) state)
     
     (rj-method nodes-stats (task-id) 

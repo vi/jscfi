@@ -171,6 +171,9 @@
 
   action-download (create-action "Download" (fn [_] (download-task jscfi @task-id))
       { Action/SHORT_DESCRIPTION  "Download output.txt"})
+  
+  action-download-all (create-action "Download all" (fn [_] (download-all-task jscfi @task-id))
+      { Action/SHORT_DESCRIPTION  "Download all task files"})
 
   action-purge (create-action "Purge" (fn [_] (purge-task jscfi @task-id))
       { Action/SHORT_DESCRIPTION  "Remove task files from server"})
@@ -192,6 +195,7 @@
    :upload (JButton. action-upload),
    :schedule (JButton. action-schedule),
    :download (JButton. action-download),
+   :download-all (JButton. action-download-all),
    :purge (JButton. action-purge),
    :remove (JButton. action-remove),
    :cancel (JButton. action-cancel),
@@ -258,6 +262,7 @@
    (.add (:nodes-stats buttons) "growx,wrap")
    (.add (:revert buttons) "growx")
    (.add (:terminate buttons) "growx")
+   (.add (:download-all buttons) "growx")
    (.revalidate))
    (try 
    (doall (map (fn[x] ((:adder (get fields2 (:tf x))) panel disable-buttons-per-edit)) fields))

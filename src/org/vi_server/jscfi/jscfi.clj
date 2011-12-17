@@ -54,6 +54,7 @@
     (suspend-task [this task-id])
     (resume-task [this task-id])
     (download-task [this task-id])
+    (download-all-task [this task-id])
     (purge-task [this task-id])
 
     (nodes-stats [this task-id])
