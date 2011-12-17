@@ -17,7 +17,7 @@ $HOME/jscfi/bin/diststatcollect pbs-nodes >> stat &
 STATCOLLECT_PID=$!
 
 cd source.c &&
-LD_LIBRARY_PATH=/share/mvapich-gcc/lib/shared/ /usr/bin/time -f '%%e' -o timing /share/mvapich-gcc/bin/mpirun_rsh -np $NP -hostfile `pwd`/../pbs-nodes /home/shukela/bin/lmp_my %s < input.txt 2> stderr > stdout
+LD_LIBRARY_PATH=/share/mvapich-gcc/lib/shared/ /usr/bin/time -f '%%e' -o ../timing /share/mvapich-gcc/bin/mpirun_rsh -np $NP -hostfile `pwd`/../pbs-nodes /home/shukela/bin/lmp_my %s < input.txt 2> stderr > stdout
 date > ../completed
 
 kill $STATCOLLECT_PID
