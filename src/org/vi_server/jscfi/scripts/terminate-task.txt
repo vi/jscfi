@@ -2,7 +2,7 @@ DIR="%s"
 TDIR="%s"
 mkdir -p jscfi/"$DIR"/"$TDIR" && 
 cd jscfi/"$DIR"/"$TDIR" && 
-for i in `cat pbs-nodes`; do 
+for i in `cat pbs-nodes | sort | uniq`; do 
     echo "Node $i"; 
     ssh $i "pkill -9 -u `id -u`"; 
 done

@@ -19,4 +19,8 @@ LD_LIBRARY_PATH=/share/mvapich-gcc/lib/shared/ /usr/bin/time -f '%%e' -o timing 
 date > completed
 
 kill $STATCOLLECT_PID
+for i in `cat pbs-nodes | sort | uniq`; do 
+    ssh $i "pkill -9 -u `id -u`"; 
+done
+
 echo "server `date +%%s.%%N` -1 task_stopped" >> stat

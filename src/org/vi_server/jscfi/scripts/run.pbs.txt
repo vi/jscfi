@@ -18,4 +18,8 @@ STATCOLLECT_PID=$!
 date > completed
 
 kill $STATCOLLECT_PID
+for i in `cat pbs-nodes | sort | uniq`; do 
+    ssh $i "pkill -9 -u `id -u`"; 
+done
+
 echo "server `date +%%s.%%N` -1 task_stopped" >> stat
