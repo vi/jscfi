@@ -395,8 +395,8 @@
     (debug-print [this] (println @state-agent))
 
     (connect [this auth-observer address username directory]
-	(send state-agent (fn[state]
-	;(do (let [state @state-agent]
+	 (send state-agent (fn[state]
+	 ;(do (let [state @state-agent]
 	   (let [
 	    jsch (JSch.)
 	    _1 (when (not= (get-keyfile auth-observer) "")
@@ -429,7 +429,7 @@
 	    (.setUserInfo session ui)
 	    (connection-stage auth-observer (format "Connecting to %s@%s" username address))
 	    (try
-	     (.connect session 3000)
+	     (.connect session 10000)
 	     (connection-stage auth-observer (format "Connected to %s@%s" username address))
 	     (auth-succeed auth-observer)
 	     (emit-impl state-agent #(connected %))
