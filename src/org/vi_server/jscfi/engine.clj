@@ -334,7 +334,9 @@
        (ssh-execute session (format "rm -Rf jscfi/%s/%s/input.txt" directory (:id task)) nil)
        (ssh-upload sftp (:input-file task) (format "jscfi/%s/%s/input.txt" directory (:id task)))
        (.disconnect sftp))
-      (println "Input file uploaded")) state)
+      (println "Input file uploaded")
+      (emit message task "Input file[s] uploaded")
+      ) state)
 
     (rj-method download-task (task-id) 
      (println "Downloading output file") 
@@ -343,7 +345,9 @@
        (.connect sftp 3000)
        (ssh-download sftp (format "jscfi/%s/%s/output.txt" directory (:id task)) (:output-file task))
        (.disconnect sftp))
-      (println "Output file downloaded")) state)
+      (println "Output file downloaded")
+      (emit message task (format "Output file[s] downloaded to %s" (:output-file task)))
+      ) state)
     
     (rj-method nodes-stats (task-id) 
      (println "Collect stats about nodes the task is running on") 

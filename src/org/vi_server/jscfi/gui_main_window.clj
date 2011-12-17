@@ -71,10 +71,12 @@
   action-menu (JMenu. "Action")
   observer (reify JscfiObserver 
       (connected [this] (.setVisible frame true))
-      (compilation-failed [this task message] 
-	(msgbox (str (:name task) "\n" message)))
+      (compilation-failed [this task text] 
+	   (msgbox (str (:name task) "\n" text)))
+      (message [this task text]
+	   (msgbox (str (:name task) "\n" text)))
       (text-info [this task message] 
-	(.setVisible (create-textinfo-window (str "Text info for task " (:name task) ":\n\n" message)) true))
+	   (.setVisible (create-textinfo-window (str "Text info for task " (:name task) ":\n\n" message)) true))
       (something-changed [this] (SwingUtilities/invokeLater (fn [](.actionPerformed action-refresh nil))))
   )
   ]

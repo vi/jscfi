@@ -9,6 +9,7 @@
     "Callbacks from Jscfi object"
     (compilation-failed [this task text])
     (text-info [this task text])
+    (message [this task text])
     (connected [this]) ; dup from auth-observer's auth-succeed
     (something-changed [this])
 )
