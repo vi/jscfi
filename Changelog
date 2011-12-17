@@ -1,3 +1,13 @@
+jscfi-1.3:
+	1. nodestatworker analyser library is included in tree (and in jar)
+	2. Settigns window: known hosts and external jar viewer
+	3. Messages boxes when if finished uploading or downloading files
+	4. Version number in title of windows
+	5. Download the whole task directory feature 
+	6. Fix statistics collecting, lammpsdir mode
+	7. Monitoring: loading external log viewer
+	8. Terminate all our processes on nodes when finishing execution
+
 jscfi-1.2:
 	1. Monitoring infrastucture (notestatworker/fdlinecombine/diststatcollect)
 	2. NAT traversal feature
