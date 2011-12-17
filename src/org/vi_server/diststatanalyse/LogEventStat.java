@@ -100,6 +100,15 @@ public class LogEventStat extends LogEvent {
 	
 	static Pattern splitter = Pattern.compile("\\s+");
 	
+	/* Numbers can be bigger than maximum allowed for long */
+	static long tryParseLong(String str) {
+		try {
+			return Long.parseLong(str);
+		} catch (Exception e) {
+			return -1;
+		}
+	}
+	
 	public LogEventStat(double time, String hostname, int pid, String args) {
 		super(time, hostname, pid);
 		
@@ -116,7 +125,7 @@ public class LogEventStat extends LogEvent {
 		session       = Integer.parseInt(a[5]);
 		tty_nr        = Integer.parseInt(a[6]);
 		tpgid         = Integer.parseInt(a[7]);
-		flags         = Integer.parseInt(a[8]);
+		flags         = (int)tryParseLong(a[8]);
 		minflt        = Long.parseLong(a[9]);
 		cminflt       = Long.parseLong(a[10]);        
 		majflt        = Long.parseLong(a[11]);
@@ -129,10 +138,10 @@ public class LogEventStat extends LogEvent {
 		nice          = Integer.parseInt(a[18]);
 		num_threads   = Integer.parseInt(a[19]);
 		//itrealvalue = Integer.parseInt(a[20]);
-		starttime     = Long.parseLong(a[21]);
-		vsize         = Long.parseLong(a[22]);
-		rss           = Long.parseLong(a[23]);
-		rsslim        = Long.parseLong(a[24]);
+		starttime     = tryParseLong(a[21]);
+		vsize         = tryParseLong(a[22]);
+		rss           = tryParseLong(a[23]);
+		rsslim        = tryParseLong(a[24]);
 		//...		
 	}
 
