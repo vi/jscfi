@@ -22,6 +22,16 @@ public class Main implements TaskWatcherObserver {
 		
 		ii.run();
 	}
+	
+	public static void main(InputStream is) {
+		Interpreter ii = new Interpreter(is);
+		
+		TaskWatcher tw = new TaskWatcher();
+		tw.observers.add(new Main());
+		ii.observers.add(tw);
+		
+		ii.run();
+	}
 
 	
 	public void newLogEvent(LogEventUnknown e) {

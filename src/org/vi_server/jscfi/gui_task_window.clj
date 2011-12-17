@@ -2,12 +2,53 @@
     "GUI for Jscfi's task window"
     (:use org.vi-server.jscfi.jscfi)
     (:use org.vi-server.jscfi.gui-common)
+    (:use org.vi-server.jscfi.gui-settings-window)
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
      (javax.swing JMenu JMenuBar JPasswordField)
      (java.awt.event KeyEvent MouseAdapter WindowAdapter)
      (java.awt Event)
      (net.miginfocom.swing MigLayout)))
+
+(defn get-monitoring-output []
+    (let [
+     log-viewer (:log-viewer @settings)
+     output (if 
+         (empty? log-viewer) 
+         System/out
+         (try
+          (let [
+            pipein (java.io.PipedInputStream.)
+            pipeout (java.io.PipedOutputStream. pipein)
+            
+            classPathUrls (into-array java.net.URL [(java.net.URL. (str "file://" log-viewer))])
+            classLoader (java.net.URLClassLoader. classPathUrls)
+            _ (println "MM Loaded " log-viewer)
+            mainClassName (-> 
+                (java.util.jar.JarFile. log-viewer) 
+                (.getManifest) 
+                (.getMainAttributes) 
+                (.getValue "Main-Class") )
+            _ (println "MM Main class is " mainClassName)
+            mainClass (.loadClass classLoader mainClassName)
+            ourMainMethod (.getMethod mainClass "main" (into-array Class [java.io.InputStream]))
+            _ (println "MM Found static main(InputStream)")
+           ]
+           (.start (Thread. (fn[]
+             (println "MM Started external monitoring")
+             (try
+                (.invoke ourMainMethod nil (into-array Object [pipein]))
+              (catch Exception e (println "MM " e)))
+             (println "MM External monitoring exited")
+             (.close pipein)
+             )))
+           pipeout
+           )
+          (catch Exception e (println e) System/out))
+         )
+     ]
+     output
+    ))
 
 (def button-enabledness-per-status {
  :created      #{:compile :remove},
@@ -187,7 +228,9 @@
   action-terminate (create-action "Terminate task" (fn [_] (terminate-task jscfi @task-id))
       { Action/SHORT_DESCRIPTION  "Kill all user's processes on nodes and mpirun"})
   
-  action-monitor (create-action "Monitor" (fn [_] (monitor-task jscfi @task-id System/out))
+  action-monitor (create-action "Monitor" (fn [_] 
+        (monitor-task jscfi @task-id (get-monitoring-output))
+       )
       { Action/SHORT_DESCRIPTION  "Start resource monitor on this task"})
   
   button-panel (JPanel. (MigLayout. "", "[pref][pref]", "[grow]5"))
