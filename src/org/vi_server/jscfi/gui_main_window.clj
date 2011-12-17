@@ -1,4 +1,4 @@
-(ns org.vi-server.jscfi.gui
+(ns org.vi-server.jscfi.gui-main-window
     "GUI for Jscfi (main window)"
     (:use org.vi-server.jscfi.jscfi)
     (:use org.vi-server.jscfi.gui-common)
@@ -62,6 +62,10 @@
       (fn [_] 
        (debug-print jscfi))
       { Action/SHORT_DESCRIPTION  "Print debugging information", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_P Event/CTRL_MASK) })
+  action-settings (create-action "Settings" 
+      (fn [_] 
+       (.show (create-settings-window)))
+      { Action/SHORT_DESCRIPTION  "Show settings window"})
   menubar (JMenuBar.)
   view-menu (JMenu. "View")
   action-menu (JMenu. "Action")
@@ -79,7 +83,7 @@
    (.setContentPane panel)
    (.setJMenuBar menubar)
    (.setLocationRelativeTo nil)
-   (.setTitle "Jscfi - SuperComputer Phoenix Initiative GUI"))
+   (.setTitle (format "Jscfi v%s - SuperComputer Phoenix Initiative GUI", jscfi-version)))
   (doto panel
    (.add (JScrollPane. jlist) "grow,span 3")
    (.revalidate))
