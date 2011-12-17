@@ -8,4 +8,5 @@
 		  [com/jcraft/jsch "0.1.44-1"]
 		  ]
     :main org.vi-server.jscfi.main2
+    :java-source-path "src"
 )
