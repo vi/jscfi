@@ -187,6 +187,9 @@
   action-terminate (create-action "Terminate task" (fn [_] (terminate-task jscfi @task-id))
       { Action/SHORT_DESCRIPTION  "Kill all user's processes on nodes and mpirun"})
   
+  action-monitor (create-action "Monitor" (fn [_] (monitor-task jscfi @task-id System/out))
+      { Action/SHORT_DESCRIPTION  "Start resource monitor on this task"})
+  
   button-panel (JPanel. (MigLayout. "", "[pref][pref]", "[grow]5"))
   buttons {
    :display (JButton. action-display),
@@ -202,6 +205,7 @@
    :nodes-stats (JButton. action-nodesstats),
    :revert (JButton. action-revert),
    :terminate (JButton. action-terminate),
+   :monitor (JButton. action-monitor),
    }
   update-ui-traits (fn[] "Updates various things like changed/not-changed or enabled/disabled things"
    (if @task-id
@@ -263,6 +267,7 @@
    (.add (:revert buttons) "growx")
    (.add (:terminate buttons) "growx")
    (.add (:download-all buttons) "growx")
+   (.add (:monitor buttons) "growx")
    (.revalidate))
    (try 
    (doall (map (fn[x] ((:adder (get fields2 (:tf x))) panel disable-buttons-per-edit)) fields))

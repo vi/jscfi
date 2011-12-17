@@ -59,7 +59,7 @@
 
     (nodes-stats [this task-id])
     (terminate-task [this task-id])
-    (stat-collector [this task-id])
+    (monitor-task [this task-id ^java.io.OutputStream output])
 
     (get-source-modes [this]) ;; return the list like [:single-c-file :single-cpp-file :directory-with-a-makefile :single-lammps-file :single-shellscript-file]
 

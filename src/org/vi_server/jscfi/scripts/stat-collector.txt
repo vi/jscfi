@@ -2,4 +2,4 @@ DIR="%s"
 TDIR="%s"
 mkdir -p jscfi/"$DIR"/"$TDIR" && 
 cd jscfi/"$DIR"/"$TDIR" &&
-$HOME/jscfi/bin/diststatcollect pbs-nodes
+tail -f stat

@@ -377,13 +377,17 @@
       ]
 	state))
     
-    (rj-method stat-collector (task-id) 
-     (println "Node stat collector") 
+    (monitor-task [this task-id output]
+     (println "Monitor this task") 
      (let [
-      task (get tasks task-id)
-      result (ssh-execute-output session (read-script "stat-collector.txt" directory (:id task) (:pbs-id task)) nil System/out)
-      ]
-	state))
+       state @state-agent
+       session (:session state)
+       task (get-task this task-id)
+       directory (:directory state)
+       ]
+      (ssh-execute-output session (read-script "stat-collector.txt" directory (:id task) (:pbs-id task)) nil output)
+      )
+    )
 
     (rj-method add-observer (observer_) (assoc state :observers (conj observers observer_)))
     (rj-method remove-observer (observer_) (assoc state :observers (disj observers observer_)))
