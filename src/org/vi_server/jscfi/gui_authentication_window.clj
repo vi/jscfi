@@ -2,6 +2,7 @@
     "GUI for Jscfi (authentication window)"
     (:use org.vi-server.jscfi.jscfi)
     (:use org.vi-server.jscfi.gui-common)
+    (:use org.vi-server.jscfi.gui-settings-window)
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
      (javax.swing JMenu JMenuBar JPasswordField)
@@ -55,19 +56,17 @@
   server-field (JTextField. (.get prefs "hostname" "217.21.43.14"))
   password-field (JPasswordField.)
   keyfile-field (JTextField. (.get prefs "keyfile" ""))
-  hostsfile-field (JTextField. (.get prefs "known_hosts" ""))
   directory-field (JTextField. (.get prefs "directory" "default"))
   nat-traversal-field (JTextField. (.get prefs "nat_traverse" "78.138.100.25:5588:217.21.43.14:22"))
   connstage-label (JLabel.)
   auth-observer (reify AuthObserver
       (get-password [this] (.getText password-field))
       (get-keyfile [this] (.getText keyfile-field))
-      (get-hostsfile [this] (.getText hostsfile-field))
+      (get-hostsfile [this] (:known-hosts @settings))
       (auth-succeed [this] 
        (.put prefs "login" (.getText user-field))
        (.put prefs "hostname" (.getText server-field))
        (.put prefs "keyfile" (.getText keyfile-field))
-       (.put prefs "known_hosts" (.getText hostsfile-field))
        (.put prefs "directory" (.getText directory-field))
        (doto frame (.setVisible false) (.dispose))
        )
@@ -78,6 +77,8 @@
       (if (re-find #"^[A-Za-z0-9_]{1,32}$" (.getText directory-field))
        (connect jscfi auth-observer (.getText server-field) (.getText user-field) (.getText directory-field))
        (msgbox "Directory should match ^[A-Za-z0-9_]{1,32}$"))) {})
+  action-settings (create-action "Settings" (fn [_] 
+      (.show (create-settings-window))) {})
   action-nat (create-action "Set" (fn [_] 
     (let [q (agent nil), line (.getText nat-traversal-field)]
      (send q (fn[_]
@@ -96,7 +97,7 @@
     {Action/SHORT_DESCRIPTION  "Connect to both hosts and exchange data"})
   ]
   (doto frame 
-   (.setSize 430 315)
+   (.setSize 430 300)
    (.setContentPane panel)
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (exit-if-needed))))
    (.setTitle "Login to SCFI")
@@ -115,10 +116,6 @@
    (.add keyfile-field "growx")
    (.add (create-file-chooser-button keyfile-field :open) "wrap")
 
-   (.add (JLabel. "Known hosts:"))
-   (.add hostsfile-field "growx")
-   (.add (create-file-chooser-button hostsfile-field :open) "wrap")
-   
    (.add (JLabel. "Directory:"))
    (.add directory-field "growx,wrap,span 2")
    
@@ -127,21 +124,11 @@
    (.add (JButton. action-nat) "wrap")
 
    (.add connstage-label "span 2,wrap")
-   (.add (JButton. action-connect) "span 2")
+
+   (.add (JButton. action-settings) "")
+   (.add (JButton. action-connect) "")
    (.revalidate))
   (.setLocationRelativeTo frame nil)
 
-  ;; if known_hosts is not saved in preferences, try to detect it
-  (try
-   (when (= "" (.getText hostsfile-field))
-    (let [
-     c1 (System/getenv "HOME")
-     c2 (System/getenv "APPDATA")
-     ]
-     (if c2
-      (.setText hostsfile-field (str c2 "\\known_hosts"))
-      (when c1 (.setText hostsfile-field (str c1 "/.ssh/known_hosts"))
-       (.mkdirs (java.io.File. (str c1 "/.ssh")))))))
-   (catch Exception e (.printStackTrace e)))
   frame))
 

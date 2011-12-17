@@ -4,6 +4,7 @@
     (:use org.vi-server.jscfi.gui-common)
     (:use org.vi-server.jscfi.gui-task-window)
     (:use org.vi-server.jscfi.gui-authentication-window)
+    (:use org.vi-server.jscfi.gui-settings-window)
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
      (javax.swing JMenu JMenuBar JPasswordField)
@@ -85,6 +86,7 @@
   (.add view-menu    action-refresh)
   (.add view-menu    action-update)
   (.add view-menu    action-open)
+  (.add view-menu    action-settings)
   (.add action-menu    action-create)
   (.add action-menu    action-debug-print)
   (doto menubar
