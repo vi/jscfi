@@ -435,7 +435,7 @@
 	     (emit-impl state-agent #(connected %))
 	     (emit-impl state-agent #(something-changed %))
          (try
-          (let [scripts-version-number "1"]
+          (let [scripts-version-number "2"]
            (when (not= (ssh-execute session (read-script "check-scripts-version.txt") nil) scripts-version-number)
             (println "Uploading some scripts to server")
             (ssh-execute session (read-script "upload-scripts-prepare.txt") 

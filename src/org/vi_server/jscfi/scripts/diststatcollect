@@ -22,7 +22,7 @@ SSH_LIST=`cat "$file" | sort | uniq | tr '\n' ' ' | sed 's!\([^ ]\+\)!<(ssh "\1"
 # SSH_LIST is like "<(ssh "node-040" "$HOME/jscfi/bin/nodestatworker" < /dev/null) <(ssh "node-041" "$HOME/jscfi/bin/nodestatworker" < /dev/null)"
 
 #echo "SEPARATOR=<(printf '===.\n') $HOME/bin/fdlinecombine $SSH_LIST" >&2
-exec bash -c "SEPARATOR=<(printf '===.\n') exec $HOME/bin/fdlinecombine $SSH_LIST"
+exec bash -c "SEPARATOR=<(printf '===.\n') exec $HOME/jscfi/bin/fdlinecombine $SSH_LIST"
 ~
 ~
 
