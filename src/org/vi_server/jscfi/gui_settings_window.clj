@@ -8,6 +8,7 @@
      (java.awt Event)
      (net.miginfocom.swing MigLayout)))
 
+(def jscfi-version "1.3")
 
 (defn load-settings []
   (let [

@@ -100,7 +100,7 @@
    (.setSize 430 300)
    (.setContentPane panel)
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (exit-if-needed))))
-   (.setTitle "Login to SCFI")
+   (.setTitle (format "Login to SCFI; v%s" jscfi-version))
   )
   (doto panel
    (.add (JLabel. "Server:"))
