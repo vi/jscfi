@@ -6,7 +6,7 @@ tr ',' '\n' > monitor-nodes-$$.txt
 $HOME/jscfi/bin/diststatcollect monitor-nodes-$$.txt
 
 for i in `cat monitor-nodes-$$.txt`; do
-    ssh $i 'pkill -u `id -u` nodestatworker'
+    ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no -o ConnectTimeout=3 $i 'pkill -u `id -u` nodestatworker'
 done
 
 rm -f monitor-nodes-$$.txt

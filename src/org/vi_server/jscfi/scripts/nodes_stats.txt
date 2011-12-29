@@ -2,4 +2,4 @@ DIR="%s"
 TDIR="%s"
 mkdir -p jscfi/"$DIR"/"$TDIR" && 
 cd jscfi/"$DIR"/"$TDIR" && 
-for i in `cat pbs-nodes | sort | uniq`; do echo "=== Node $i ==="; ssh $i "echo -n 'Load average: '; cat /proc/loadavg; cat /proc/meminfo; echo; echo '10 the most active non-root tasks:'; ps auxh | sort -nk 3 | grep -v '^root' | tail -n 10; echo; echo; echo"; done
+for i in `cat pbs-nodes | sort | uniq`; do echo "=== Node $i ==="; ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no -o ConnectTimeout=3 $i "echo -n 'Load average: '; cat /proc/loadavg; cat /proc/meminfo; echo; echo '10 the most active non-root tasks:'; ps auxh | sort -nk 3 | grep -v '^root' | tail -n 10; echo; echo; echo"; done

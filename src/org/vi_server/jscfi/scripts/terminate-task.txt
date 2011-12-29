@@ -4,6 +4,6 @@ mkdir -p jscfi/"$DIR"/"$TDIR" &&
 cd jscfi/"$DIR"/"$TDIR" && 
 for i in `cat pbs-nodes | sort | uniq`; do 
     echo "Node $i"; 
-    ssh $i "pkill -9 -u `id -u`"; 
+    ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no -o ConnectTimeout=3 $i 'pkill -9 -u `id -u`'; 
 done
 killall mpirun

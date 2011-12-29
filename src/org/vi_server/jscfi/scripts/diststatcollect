@@ -17,7 +17,7 @@ if [ ! -x $JB/nodestatworker ]; then
     chmod +x  $JB/nodestatworker || echo "Warning: nodestatworker is not found/executable" >&2;
 fi
 
-SSH_LIST=`cat "$file" | sort | uniq | tr '\n' ' ' | sed 's!\([^ ]\+\)!<(ssh "\1" "$HOME/jscfi/bin/nodestatworker" < /dev/null)!g'
+SSH_LIST=`cat "$file" | sort | uniq | tr '\n' ' ' | sed 's!\([^ ]\+\)!<(ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no -o ConnectTimeout=3 "\1" "$HOME/jscfi/bin/nodestatworker" < /dev/null)!g'
 `;
 # SSH_LIST is like "<(ssh "node-040" "$HOME/jscfi/bin/nodestatworker" < /dev/null) <(ssh "node-041" "$HOME/jscfi/bin/nodestatworker" < /dev/null)"
 
