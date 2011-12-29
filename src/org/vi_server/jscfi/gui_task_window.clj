@@ -10,46 +10,6 @@
      (java.awt Event)
      (net.miginfocom.swing MigLayout)))
 
-(defn get-monitoring-output []
-    (let [
-     log-viewer (:log-viewer @settings)
-     output (if 
-         (empty? log-viewer) 
-         System/out
-         (try
-          (let [
-            pipein (java.io.PipedInputStream.)
-            pipeout (java.io.PipedOutputStream. pipein)
-            
-            classPathUrls (into-array java.net.URL [(java.net.URL. (str "file://" log-viewer))])
-            classLoader (java.net.URLClassLoader. classPathUrls)
-            _ (println "MM Loaded " log-viewer)
-            mainClassName (-> 
-                (java.util.jar.JarFile. log-viewer) 
-                (.getManifest) 
-                (.getMainAttributes) 
-                (.getValue "Main-Class") )
-            _ (println "MM Main class is " mainClassName)
-            mainClass (.loadClass classLoader mainClassName)
-            ourMainMethod (.getMethod mainClass "main" (into-array Class [java.io.InputStream]))
-            _ (println "MM Found static main(InputStream)")
-           ]
-           (.start (Thread. (fn[]
-             (println "MM Started external monitoring")
-             (try
-                (.invoke ourMainMethod nil (into-array Object [pipein]))
-              (catch Exception e (println "MM " e)))
-             (println "MM External monitoring exited")
-             (.close pipein)
-             )))
-           pipeout
-           )
-          (catch Exception e (println e) System/out))
-         )
-     ]
-     output
-    ))
-
 (def button-enabledness-per-status {
  :created      #{:compile :remove},
  :compilation-failed #{:compile :purge},

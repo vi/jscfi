@@ -2,6 +2,10 @@
     "Common things for Jscfi's GUI"
     (:import (javax.swing AbstractAction Action JButton JFileChooser SwingUtilities JComboBox)))
 
+(def jscfi-version "1.3")
+
+(def settings (atom nil)) ;; initialized in gui_settings_window.clj
+
 (defn create-action "Creates an implementation of AbstractAction." [name behavior options]
  (let [
   action (proxy [AbstractAction] [name]
@@ -41,3 +45,45 @@
 
 (defn exit-if-needed [] 
  (when-not (System/getenv "DONT_EXIT") (System/exit 0)))
+
+
+(defn get-monitoring-output []
+    "Start external monitoring tool and return pipe for writing into it. Returns System.out in case of failure."
+    (let [
+     log-viewer (:log-viewer @settings)
+     output (if 
+         (empty? log-viewer) 
+         System/out
+         (try
+          (let [
+            pipein (java.io.PipedInputStream.)
+            pipeout (java.io.PipedOutputStream. pipein)
+            
+            classPathUrls (into-array java.net.URL [(java.net.URL. (str "file://" log-viewer))])
+            classLoader (java.net.URLClassLoader. classPathUrls)
+            _ (println "MM Loaded " log-viewer)
+            mainClassName (-> 
+                (java.util.jar.JarFile. log-viewer) 
+                (.getManifest) 
+                (.getMainAttributes) 
+                (.getValue "Main-Class") )
+            _ (println "MM Main class is " mainClassName)
+            mainClass (.loadClass classLoader mainClassName)
+            ourMainMethod (.getMethod mainClass "main" (into-array Class [java.io.InputStream]))
+            _ (println "MM Found static main(InputStream)")
+           ]
+           (.start (Thread. (fn[]
+             (println "MM Started external monitoring")
+             (try
+                (.invoke ourMainMethod nil (into-array Object [pipein]))
+              (catch Exception e (println "MM " e)))
+             (println "MM External monitoring exited")
+             (.close pipein)
+             )))
+           pipeout
+           )
+          (catch Exception e (println e) System/out))
+         )
+     ]
+     output
+    ))

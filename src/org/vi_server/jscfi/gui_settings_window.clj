@@ -8,7 +8,6 @@
      (java.awt Event)
      (net.miginfocom.swing MigLayout)))
 
-(def jscfi-version "1.3")
 
 (defn load-settings []
   (let [
@@ -37,7 +36,7 @@
   )
  )
 
-(def settings (atom (load-settings)))
+(swap! settings (fn[_] (load-settings)))
 
 (defn create-settings-window []
  (let [
