@@ -58,7 +58,6 @@
   (doto frame 
    (.setSize 430 135)
    (.setContentPane panel)
-   (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (exit-if-needed))))
    (.setTitle "Jscfi settings")
   )
   (doto panel
