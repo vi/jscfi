@@ -72,6 +72,9 @@
   action-check-your-nodes (create-action "Check your nodes" 
       (fn [_] (check-your-nodes jscfi))
       { Action/SHORT_DESCRIPTION  "Run /share/check-your-nodes script"})
+  action-check-nodes-loadavg (create-action "Show nodes load average" 
+      (fn [_] (check-nodes-loadavg jscfi))
+      { Action/SHORT_DESCRIPTION  "Traverse nodes in your-nodes file and show load average"})
   menubar (JMenuBar.)
   view-menu (JMenu. "View")
   action-menu (JMenu. "Action")
@@ -103,6 +106,7 @@
   (.add action-menu    action-debug-print)
   (.add action-menu    action-read-your-nodes)
   (.add action-menu    action-check-your-nodes)
+  (.add action-menu    action-check-nodes-loadavg)
   (doto menubar
    (.add action-menu)
    (.add view-menu))

@@ -383,6 +383,9 @@
     (rj-method check-your-nodes () 
         (emit text-info {:name "check-your-nodes"} (ssh-execute session (read-script "check_your_nodes.txt") nil))
 	    state)
+    (rj-method check-nodes-loadavg () 
+        (emit text-info {:name "nodes loadavg"} (ssh-execute session (read-script "check_nodes_loadavg.txt") nil))
+	    state)
     
     (monitor-task [this task-id output]
      (println "Monitor this task") 

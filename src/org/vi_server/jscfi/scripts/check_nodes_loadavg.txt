@@ -1,0 +1,1 @@
+for node in $(cat $HOME/your-nodes | grep -v '^#' | cut -f1 -d\  | sed -e s/#// ); do ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no -o ConnectTimeout=3 $node "hostname | tr '\n' '\t'; cat /proc/loadavg"; done

@@ -68,6 +68,7 @@
 
     (read-your-nodes [this])
     (check-your-nodes [this])
+    (check-nodes-loadavg [this])
     
     (debug-print [this])
 )
