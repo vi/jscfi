@@ -65,6 +65,9 @@
 
     ;; Update information about tasks
     (periodic-update [this])
+
+    (read-your-nodes [this])
+    (check-your-nodes [this])
     
     (debug-print [this])
 )

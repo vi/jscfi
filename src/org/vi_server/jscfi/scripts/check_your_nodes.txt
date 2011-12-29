@@ -1,0 +1,1 @@
+/share/check-your-nodes

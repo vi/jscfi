@@ -377,6 +377,13 @@
       ]
 	state))
     
+    (rj-method read-your-nodes () 
+        (emit text-info {:name "read your-nodes"} (ssh-execute session (read-script "read_yournodes.txt") nil))
+	    state)
+    (rj-method check-your-nodes () 
+        (emit text-info {:name "check-your-nodes"} (ssh-execute session (read-script "check_your_nodes.txt") nil))
+	    state)
+    
     (monitor-task [this task-id output]
      (println "Monitor this task") 
      (let [

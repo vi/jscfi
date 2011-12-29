@@ -66,6 +66,12 @@
       (fn [_] 
        (.show (create-settings-window)))
       { Action/SHORT_DESCRIPTION  "Show settings window"})
+  action-read-your-nodes (create-action "Read your-nodes" 
+      (fn [_] (read-your-nodes jscfi))
+      { Action/SHORT_DESCRIPTION  "Output $HOME/your-nodes file"})
+  action-check-your-nodes (create-action "Check your nodes" 
+      (fn [_] (check-your-nodes jscfi))
+      { Action/SHORT_DESCRIPTION  "Run /share/check-your-nodes script"})
   menubar (JMenuBar.)
   view-menu (JMenu. "View")
   action-menu (JMenu. "Action")
@@ -95,6 +101,8 @@
   (.add view-menu    action-settings)
   (.add action-menu    action-create)
   (.add action-menu    action-debug-print)
+  (.add action-menu    action-read-your-nodes)
+  (.add action-menu    action-check-your-nodes)
   (doto menubar
    (.add action-menu)
    (.add view-menu))
