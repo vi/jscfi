@@ -1,0 +1,12 @@
+DIR="%s"
+cd jscfi/"$DIR"
+
+tr ',' '\n' > monitor-nodes-$$.txt
+
+$HOME/jscfi/bin/diststatcollect monitor-nodes-$$.txt
+
+for i in `cat monitor-nodes-$$.txt`; do
+    ssh $i 'pkill -u `id -u` nodestatworker'
+done
+
+rm -f monitor-nodes-$$.txt

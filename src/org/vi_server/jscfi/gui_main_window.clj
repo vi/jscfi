@@ -79,7 +79,8 @@
       (fn [_] 
        (let [
         node-list (javax.swing.JOptionPane/showInputDialog nil "Enter the comma-separated list of nodes to monitor")
-        ])
+        ]
+        (monitor-nodes jscfi node-list (get-monitoring-output)))
        )
       { Action/SHORT_DESCRIPTION  "Enter the list of nodes to start monitoring on"})
   menubar (JMenuBar.)
