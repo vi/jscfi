@@ -77,7 +77,9 @@
       { Action/SHORT_DESCRIPTION  "Traverse nodes in your-nodes file and show load average"})
   action-start-manual-monitoring (create-action "Set up manual monitoring" 
       (fn [_] 
-       ;(check-nodes-loadavg jscfi)
+       (let [
+        node-list (javax.swing.JOptionPane/showInputDialog nil "Enter the comma-separated list of nodes to monitor")
+        ])
        )
       { Action/SHORT_DESCRIPTION  "Enter the list of nodes to start monitoring on"})
   menubar (JMenuBar.)

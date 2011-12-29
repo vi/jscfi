@@ -395,7 +395,18 @@
        task (get-task this task-id)
        directory (:directory state)
        ]
-      (ssh-execute-output session (read-script "stat-collector.txt" directory (:id task) (:pbs-id task)) nil output)
+      (ssh-execute-output session (read-script "stat-collector-task.txt" directory (:id task) (:pbs-id task)) nil output)
+      )
+    )
+    
+    (monitor-nodes [this node-list output]
+     (println "Monitor nodes " node-list) 
+     (let [
+       state @state-agent
+       session (:session state)
+       directory (:directory state)
+       ]
+      (ssh-execute-output session (read-script "stat-collector-nodes.txt" directory) node-list output)
       )
     )
 
