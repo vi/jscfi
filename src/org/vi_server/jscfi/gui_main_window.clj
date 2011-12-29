@@ -75,6 +75,11 @@
   action-check-nodes-loadavg (create-action "Show nodes load average" 
       (fn [_] (check-nodes-loadavg jscfi))
       { Action/SHORT_DESCRIPTION  "Traverse nodes in your-nodes file and show load average"})
+  action-start-manual-monitoring (create-action "Set up manual monitoring" 
+      (fn [_] 
+       ;(check-nodes-loadavg jscfi)
+       )
+      { Action/SHORT_DESCRIPTION  "Enter the list of nodes to start monitoring on"})
   menubar (JMenuBar.)
   view-menu (JMenu. "View")
   action-menu (JMenu. "Action")
@@ -100,13 +105,20 @@
    (.revalidate))
   (.add view-menu    action-refresh)
   (.add view-menu    action-update)
+  (.addSeparator view-menu)
   (.add view-menu    action-open)
+  (.addSeparator view-menu)
   (.add view-menu    action-settings)
+
   (.add action-menu    action-create)
-  (.add action-menu    action-debug-print)
+  (.addSeparator action-menu)
+  (.add action-menu    action-start-manual-monitoring)
+  (.addSeparator action-menu)
   (.add action-menu    action-read-your-nodes)
   (.add action-menu    action-check-your-nodes)
   (.add action-menu    action-check-nodes-loadavg)
+  (.addSeparator action-menu)
+  (.add action-menu    action-debug-print)
   (doto menubar
    (.add action-menu)
    (.add view-menu))
