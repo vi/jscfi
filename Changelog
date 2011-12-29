@@ -1,3 +1,7 @@
+jscfi-1.4:
+	1. Commands to get list and status of your nodes
+	2. Starting monitoring on node list (without task)
+
 jscfi-1.3:
 	1. nodestatworker analyser library is included in tree (and in jar)
 	2. Settigns window: known hosts and external jar viewer

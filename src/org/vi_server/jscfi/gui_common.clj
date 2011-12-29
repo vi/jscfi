@@ -2,7 +2,7 @@
     "Common things for Jscfi's GUI"
     (:import (javax.swing AbstractAction Action JButton JFileChooser SwingUtilities JComboBox)))
 
-(def jscfi-version "1.3")
+(def jscfi-version "1.4")
 
 (def settings (atom nil)) ;; initialized in gui_settings_window.clj
 
