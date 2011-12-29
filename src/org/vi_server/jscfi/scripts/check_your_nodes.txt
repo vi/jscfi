@@ -1,1 +1,9 @@
+if [ ! -s $HOME/your-nodes ]; then
+    cp -v /share/4nodes/all_nodes.txt $HOME/your-nodes
+    echo "Warning: $HOME/your-nodes was absent. Copied /share/4nodes/all_nodes.txt to your-nodes file."
+    echo "Restart 'check-your-nodes' to get the list of available nodes."
+    echo "Note that the script will run for about 5 minutes from now"
+    exit 0;
+fi
+
 /share/check-your-nodes
