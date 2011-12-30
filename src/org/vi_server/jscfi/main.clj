@@ -2,5 +2,8 @@
     "GUI for Jscfi"
     (:use org.vi-server.jscfi.gui-main-window)
     (:use org.vi-server.jscfi.engine)
-    )
-(gui-main (get-jscfi-engine))
+    (:gen-class))
+
+(defn -main [& args] 
+ (gui-main (get-jscfi-engine)))
+
