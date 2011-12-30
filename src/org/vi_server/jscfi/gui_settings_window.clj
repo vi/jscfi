@@ -40,6 +40,30 @@
 
 (swap! settings (fn[_] (load-settings)))
 
+(defn extract-source-code [target-directory]
+    (let [tdu (str (.toURI (java.io.File. target-directory)))]
+        (defn get-target-file [name] 
+         "Get path of name in target directory. 
+         'org/vi_server' -> file:/c:/jscfi-source/////org/vi_server -> File C:\\jscfi-source\\org\\vi_server"
+         (java.io.File. (java.net.URI. (str tdu "/////" name))))
+        (defn mkdir [name] (.mkdirs (get-target-file name)))
+        (defn read-resource [name] (slurp (ClassLoader/getSystemResourceAsStream name)))
+        (defn extract-file [name] 
+         (let [
+          f (get-target-file name)
+          _ (println (str "Extracting " (str f)))
+          _ (.mkdirs (.getParentFile f))
+          w (java.io.FileWriter. f)
+          ]
+          (.write w (read-resource name))
+          (.close w)
+          ))
+        
+        (doall (map #(extract-file %)
+         (seq (.split #"\n" (read-resource "jscfi-file-list.txt")))))
+    )
+)
+
 (defn create-settings-window []
  (let [
   panel (JPanel. (MigLayout. "", "[][grow][pref]", "[grow]2[grow][grow]"))
@@ -65,7 +89,8 @@
        (swap! settings (fn[_]{:known-hosts known-hosts, :log-viewer log-viewer, :source-directory source-directory}))) 
       ) {})
   action-extract-source (create-action "Extract source code" (fn [_] 
-    ;(slurp (ClassLoader/getSystemResourceAsStream "org/vi_server/jscfi/jscfi.clj"))
+    (let [source-directory (.getText source-directory-field)]
+     (extract-source-code source-directory))
     ) {})
   ]
   (doto frame 
