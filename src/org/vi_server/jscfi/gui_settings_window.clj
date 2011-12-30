@@ -6,6 +6,7 @@
      (javax.swing JMenu JMenuBar JPasswordField)
      (java.awt.event KeyEvent MouseAdapter WindowAdapter)
      (java.awt Event)
+     (java.io File)
      (net.miginfocom.swing MigLayout)))
 
 
@@ -14,6 +15,7 @@
     prefs (.node (java.util.prefs.Preferences/userRoot) "/org/vi-server/jscfi")
     known-hosts (.get prefs "known_hosts" "")
     log-viewer (.get prefs "log_viewer" "")
+    source-directory (.get prefs "source_directory" "")
 
     ;; if known_hosts is not saved in preferences, try to detect it
     known-hosts2 
@@ -32,7 +34,7 @@
        known-hosts)
       (catch Exception e (.printStackTrace e) known-hosts))
    ]
-   {:known-hosts known-hosts2, :log-viewer log-viewer}   
+   {:known-hosts known-hosts2, :log-viewer log-viewer, :source-directory source-directory}   
   )
  )
 
@@ -45,18 +47,29 @@
   prefs (.node (java.util.prefs.Preferences/userRoot) "/org/vi-server/jscfi")
   hostsfile-field (JTextField. (:known-hosts @settings))
   log-viewer-field (JTextField. (:log-viewer @settings))
+  source-directory-field (JTextField. (:source-directory @settings))
   action-save (create-action "Save" (fn [_] 
       (let [
         known-hosts (.getText hostsfile-field),
         log-viewer (.getText log-viewer-field)
+        source-directory (.getText source-directory-field)
         ]
        (.put prefs "known_hosts" known-hosts)
        (.put prefs "log_viewer" log-viewer)
-       (swap! settings (fn[_]{:known-hosts known-hosts, :log-viewer log-viewer})))        
+       (.put prefs "source_directory" source-directory)
+       (when (not (empty? source-directory))
+        (let [sample-jscfi-file (str source-directory "/org/vi_server/jscfi/jscfi.clj")]
+         (when (not (.canRead (File. sample-jscfi-file)))
+          (msgbox (str "Note that " sample-jscfi-file " appears to be unavailable.\n"
+           "Source loading will not work probably.")))))
+       (swap! settings (fn[_]{:known-hosts known-hosts, :log-viewer log-viewer, :source-directory source-directory}))) 
       ) {})
+  action-extract-source (create-action "Extract source code" (fn [_] 
+    ;(slurp (ClassLoader/getSystemResourceAsStream "org/vi_server/jscfi/jscfi.clj"))
+    ) {})
   ]
   (doto frame 
-   (.setSize 430 135)
+   (.setSize 430 155)
    (.setContentPane panel)
    (.setTitle "Jscfi settings")
   )
@@ -68,8 +81,13 @@
    (.add (JLabel. "Log viewer:"))
    (.add log-viewer-field "growx")
    (.add (create-file-chooser-button log-viewer-field :open) "wrap")
+   
+   (.add (JLabel. "Jscfi source dir:"))
+   (.add source-directory-field "growx")
+   (.add (create-file-chooser-button source-directory-field :opendir) "wrap")
 
    (.add (JButton. action-save))
+   (.add (JButton. action-extract-source))
 
    (.revalidate))
   (.setLocationRelativeTo frame nil)

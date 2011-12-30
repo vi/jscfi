@@ -17,7 +17,12 @@
 (defn create-file-chooser-button [textfield mode] "Create button which causes open/save dialog writing filename to the specified text field. mode is :open or :save"
  (JButton. (create-action "..." (fn[_]
   (let [fc (JFileChooser.)]
-   (when (= (if (= mode :open) (.showOpenDialog fc textfield) (.showSaveDialog fc textfield)) JFileChooser/APPROVE_OPTION)
+   (when (contains? #{:opendir :savedir} mode)
+    (.setFileSelectionMode fc JFileChooser/DIRECTORIES_ONLY))
+   (when (= (if 
+             (contains? #{:open :opendir} mode) 
+             (.showOpenDialog fc textfield) 
+             (.showSaveDialog fc textfield)) JFileChooser/APPROVE_OPTION)
     (.setText textfield (str (.getSelectedFile fc)))))) {})))
 
 (defn msgbox [text] (SwingUtilities/invokeLater (fn[](javax.swing.JOptionPane/showMessageDialog nil 
