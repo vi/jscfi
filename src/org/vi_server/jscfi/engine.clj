@@ -11,13 +11,15 @@
  (:import (java.io ByteArrayInputStream File))
  )  
 
+(def scripts-path (atom ""))
+
 (defn read-script-from-jar [script-name]
  (slurp (ClassLoader/getSystemResourceAsStream 
 	 (str "org/vi_server/jscfi/scripts/" script-name))))
 
-(defn read-script-from-file [scripts-path script-name]
+(defn read-script-from-file [script-name]
  (slurp 
-  (-> scripts-path
+  (-> @scripts-path
    (java.io.File.) 
    (.toURI) 
    (str "/" script-name) 
@@ -26,15 +28,13 @@
    (java.io.FileInputStream.))))
 
 (defn read-script-noformat [script-name] 
- (let
-  [scripts-path (System/getenv "JSCFI_SCRIPTS")]
-  (if (empty? scripts-path)
+  (if (empty? @scripts-path)
    (read-script-from-jar script-name)
    (try 
-    (read-script-from-file scripts-path script-name)
+    (read-script-from-file script-name)
     (catch Exception e (println e) 
      (println "Using embedded version of " script-name)
-     (read-script-from-jar script-name))))))
+     (read-script-from-jar script-name)))))
 
 (defn read-script [script-name & args] 
  (apply format (read-script-noformat script-name) args))

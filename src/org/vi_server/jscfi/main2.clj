@@ -25,9 +25,18 @@
         (load-file fname)))))
 
     (try
+
      (load-all-clojure-files override-source-path)
      (println "All found clj files loaded")
 
+     (let [new-jscfi-scripts (str override-source-path "/org/vi_server/jscfi/scripts")]
+      (swap! scripts-path (fn[_] new-jscfi-scripts)))
+
      (catch Exception e (println e))))))
+
+ (let
+  [scripts-path-env (System/getenv "JSCFI_SCRIPTS")]
+  (when-not (empty? scripts-path-env)
+   (swap! scripts-path (fn[_] scripts-path-env))))
 
  (gui-main (get-jscfi-engine)))
