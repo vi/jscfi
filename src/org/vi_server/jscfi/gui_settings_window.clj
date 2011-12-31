@@ -94,7 +94,7 @@
     ) {})
   ]
   (doto frame 
-   (.setSize 430 155)
+   (.setSize 430 170)
    (.setContentPane panel)
    (.setTitle "Jscfi settings")
   )

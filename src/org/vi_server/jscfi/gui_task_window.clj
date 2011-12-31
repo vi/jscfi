@@ -251,7 +251,7 @@
       (something-changed [this] (SwingUtilities/invokeLater reread-task-info)))
   ]
   (doto frame 
-   (.setSize 600 470)
+   (.setSize 600 500)
    (.setContentPane panel)
    (.setTitle "Jscfi task")
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (remove-observer jscfi observer))))
