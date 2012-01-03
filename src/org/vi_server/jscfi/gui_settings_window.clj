@@ -1,6 +1,7 @@
 (ns org.vi-server.jscfi.gui-settings-window
     "GUI for Jscfi (settings window)"
     (:use org.vi-server.jscfi.gui-common)
+    (:use clojure.tools.logging)
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
      (javax.swing JMenu JMenuBar JPasswordField)

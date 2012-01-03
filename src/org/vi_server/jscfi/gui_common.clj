@@ -1,5 +1,6 @@
 (ns org.vi-server.jscfi.gui-common
     "Common things for Jscfi's GUI"
+    (:use clojure.tools.logging)
     (:import (javax.swing AbstractAction Action JButton JFileChooser SwingUtilities JComboBox)))
 
 (def jscfi-version "1.5")

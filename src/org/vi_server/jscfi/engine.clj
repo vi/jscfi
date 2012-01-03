@@ -5,6 +5,7 @@
  (:use org.vi-server.jscfi.jscfi)
  (:use [clojure.contrib.string :only [split join upper-case lower-case trim blank?]])
  (:use [clojure.contrib.str-utils :only [chomp]])
+ (:use clojure.tools.logging)
  ;(:require [org.danlarkin.json :as json])
  ;(:require [clj-yaml.core :as yaml])
  (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp SftpException SftpATTRS))
