@@ -3,7 +3,7 @@
     (:use [clojure.tools.logging :only [info warn error debug]])
     (:import (javax.swing AbstractAction Action JButton JFileChooser SwingUtilities JComboBox)))
 
-(def jscfi-version "1.5")
+(def jscfi-version "1.6")
 
 (defn load-settings []
   (let [
