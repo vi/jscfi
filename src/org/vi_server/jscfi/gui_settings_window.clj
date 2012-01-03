@@ -66,7 +66,7 @@
 
 (defn create-settings-window []
  (let [
-  panel (JPanel. (MigLayout. "", "[][grow][pref]", "[grow]2[grow][grow]"))
+  panel (JPanel. (MigLayout. "", "[][grow][pref][pref]", "[grow]3[grow][grow]"))
   frame (JFrame.)
   prefs (.node (java.util.prefs.Preferences/userRoot) "/org/vi-server/jscfi")
   hostsfile-field (JTextField. (:known-hosts @settings))
@@ -87,11 +87,11 @@
           (msgbox (str "Note that " sample-jscfi-file " appears to be unavailable.\n"
            "Source loading will not work probably.")))))
        (swap! settings (fn[_]{:known-hosts known-hosts, :log-viewer log-viewer, :source-directory source-directory}))) 
-      ) {})
+      ) {Action/SHORT_DESCRIPTION  "Save setings (does not close the window)"})
   action-extract-source (create-action "Extract source code" (fn [_] 
     (let [source-directory (.getText source-directory-field)]
      (extract-source-code source-directory))
-    ) {})
+    ) {Action/SHORT_DESCRIPTION  "Extract the source code of this Jscfi into 'Jscfi source dir' directory'"})
   ]
   (doto frame 
    (.setSize 430 170)
@@ -99,15 +99,23 @@
    (.setTitle "Jscfi settings")
   )
   (doto panel
-   (.add (JLabel. "Known hosts:"))
+   (.add (doto (JLabel. "Known hosts:") (.setToolTipText "File to store the host key of server. Used for security.")))
    (.add hostsfile-field "growx")
    (.add (create-file-chooser-button hostsfile-field :open) "wrap")
    
-   (.add (JLabel. "Log viewer:"))
+   (.add (doto (JLabel. "Log viewer:") (.setToolTipText
+    (str "<html>Executable jar file to load external log viewer.<br/>"
+     "In addition to usual 'public static void main(String[])' it must <br/>"
+     "have 'public static void main(InputStream)' and read everything <br/>"
+     "from that InputStream without long delays (otherwise the whole Jscfi will fail).<br/>"
+     "See the example of such jar and library to parse that input at http://vi-server.org/pub/diststatanalyse-1.3.jar"
+     "<br/><br/>If empty, jscfi will dump stat data to System.out instead.</html>"))))
    (.add log-viewer-field "growx")
    (.add (create-file-chooser-button log-viewer-field :open) "wrap")
    
-   (.add (JLabel. "Jscfi source dir:"))
+   (.add (doto (JLabel. "Jscfi source dir:") (.setToolTipText
+    (str "<html>Source directory to run updated Jscfi from.<br/>"
+     "If set, jscfi will start from that source code instead of one embedded in jscfi-...-standalone.jar.</html>"))))
    (.add source-directory-field "growx")
    (.add (create-file-chooser-button source-directory-field :opendir) "wrap")
 
