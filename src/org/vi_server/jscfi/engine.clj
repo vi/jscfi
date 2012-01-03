@@ -285,7 +285,8 @@
        (.connect sftp 3000)
        (try 
 	(.mkdir sftp (format "jscfi/%s/%s" directory (:id task))) 
-	(catch SftpException e (println "The directory does already exist")))
+	(catch SftpException e (println "The directory does already exist"))
+    (catch Exception e (println "Running on buggy Clojure 1.3?" e)))
        (ssh-execute session (format "rm -Rf jscfi/%s/%s/source.c" directory (:id task)) nil)
        (ssh-upload sftp (:source-file task) (format "jscfi/%s/%s/source.c" directory (:id task)))
        (.disconnect sftp))
