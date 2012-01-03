@@ -3,7 +3,7 @@
     (:use org.vi-server.jscfi.jscfi)
     (:use org.vi-server.jscfi.gui-common)
     (:use org.vi-server.jscfi.gui-settings-window)
-    (:use clojure.tools.logging)
+    (:use [clojure.tools.logging :only [info warn error debug]])
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
      (javax.swing JMenu JMenuBar JPasswordField)
@@ -144,7 +144,6 @@
 	   task (if @task-id (get-task jscfi @task-id) {})
            newtask (into task (map (fn[x] [x ((:get (get fields2 x)))])
 	    fields-to-consider-in-save-task))]
-	   (println "QQQ " task " QQ " newtask)
 	   (try
 	    (doall (map 
 	     #(when (:regex %) (when-not (re-find (:regex %) (get newtask (:tf %)))
@@ -152,7 +151,7 @@
 	    (if @task-id
 	     (alter-task jscfi newtask)
 	     (swap! task-id (fn[_](register-task jscfi newtask))))
-	  (catch Exception e (println "pln1" e) (msgbox (str e))))) (catch Throwable e (println "pln5" e))))
+	  (catch Exception e (error "exch4" e) (msgbox (str e))))) (catch Throwable e (error e "exch3"))))
       { Action/SHORT_DESCRIPTION  "Create/change a task"})
   
   reread-task-info2 (atom nil)          #_ "Will be filled in with reread-task-info function defined below"
@@ -237,14 +236,14 @@
 	  (doall (map #((:set (get fields2 %)) (get task %)) 
 	    fields-to-update-when-reread-tasks))
 	  (update-ui-traits)
-	  (catch Exception e (println "pln2" e)))
+	  (catch Exception e (error "pln2" e)))
   ))
   _ (swap! reread-task-info2 (fn[_] reread-task-info)) #_ "Fill in reread-task-info2 above for action-revert"
   disable-buttons-per-edit (fn[]
     (try
         (doall (map #(.setEnabled (% buttons) false) [:compile :download :cancel :upload :schedule :purge :remove]))
         (doall (map #(.setEnabled (% buttons) true)  [:revert]))
-        (catch Exception e (println "dbpe Exc: " e))
+        (catch Exception e (error "dbpe Exc: " e))
     )
   )
 
@@ -275,7 +274,7 @@
    (.revalidate))
    (try 
    (doall (map (fn[x] ((:adder (get fields2 (:tf x))) panel disable-buttons-per-edit)) fields))
-   (catch Throwable e (println e)))
+   (catch Throwable e (error e)))
   (doto panel  
    (.add button-panel "span 3")
    (.revalidate))

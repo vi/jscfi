@@ -1,6 +1,6 @@
 (ns org.vi-server.jscfi.gui-common
     "Common things for Jscfi's GUI"
-    (:use clojure.tools.logging)
+    (:use [clojure.tools.logging :only [info warn error debug]])
     (:import (javax.swing AbstractAction Action JButton JFileChooser SwingUtilities JComboBox)))
 
 (def jscfi-version "1.5")
@@ -35,11 +35,11 @@
  :combobox (JComboBox. (into-array the-set)),
  :keyword-to-index (zipmap the-set (take (count the-set) (iterate inc 0))),
  :set the-set
- } (catch Throwable e (println "pln3" e))))
+ } (catch Throwable e (error "pln3" e))))
 (defn combobox-set [cb kw] (try
  (if (find (:keyword-to-index cb) kw)
   (.setSelectedIndex (:combobox cb) (get (:keyword-to-index cb) kw))
-  (.setSelectedIndex (:combobox cb) 0)) (catch Throwable e (println e))))
+  (.setSelectedIndex (:combobox cb) 0)) (catch Throwable e (error e))))
 (defn combobox-get [cb]
  (get (:set cb) (.getSelectedIndex (:combobox cb))))
 (defn combobox-field [cb] (:combobox cb))
@@ -67,28 +67,28 @@
             
             classPathUrls (into-array java.net.URL [(java.net.URL. (str "file://" log-viewer))])
             classLoader (java.net.URLClassLoader. classPathUrls)
-            _ (println "MM Loaded " log-viewer)
+            _ (info "MM Loaded " log-viewer)
             mainClassName (-> 
                 (java.util.jar.JarFile. log-viewer) 
                 (.getManifest) 
                 (.getMainAttributes) 
                 (.getValue "Main-Class") )
-            _ (println "MM Main class is " mainClassName)
+            _ (debug "MM Main class is " mainClassName)
             mainClass (.loadClass classLoader mainClassName)
             ourMainMethod (.getMethod mainClass "main" (into-array Class [java.io.InputStream]))
-            _ (println "MM Found static main(InputStream)")
+            _ (debug "MM Found static main(InputStream)")
            ]
            (.start (Thread. (fn[]
-             (println "MM Started external monitoring")
+             (info "MM Started external monitoring")
              (try
                 (.invoke ourMainMethod nil (into-array Object [pipein]))
-              (catch Exception e (println "MM " e)))
-             (println "MM External monitoring exited")
+              (catch Exception e (error "MM " e)))
+             (info "MM External monitoring exited")
              (.close pipein)
              )))
            pipeout
            )
-          (catch Exception e (println e) System/out))
+          (catch Exception e (error "MM " e) System/out))
          )
      ]
      output

@@ -1,7 +1,7 @@
 (ns org.vi-server.jscfi.gui-settings-window
     "GUI for Jscfi (settings window)"
     (:use org.vi-server.jscfi.gui-common)
-    (:use clojure.tools.logging)
+    (:use [clojure.tools.logging :only [info warn error debug]])
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
      (javax.swing JMenu JMenuBar JPasswordField)
@@ -52,7 +52,7 @@
         (defn extract-file [name] 
          (let [
           f (get-target-file name)
-          _ (println (str "Extracting " (str f)))
+          _ (debug "Extracting " (str f))
           _ (.mkdirs (.getParentFile f))
           w (java.io.FileWriter. f)
           ]

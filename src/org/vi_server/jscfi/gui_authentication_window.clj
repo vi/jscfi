@@ -3,7 +3,7 @@
     (:use org.vi-server.jscfi.jscfi)
     (:use org.vi-server.jscfi.gui-common)
     (:use org.vi-server.jscfi.gui-settings-window)
-    (:use clojure.tools.logging)
+    (:use [clojure.tools.logging :only [info warn error debug]])
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
      (javax.swing JMenu JMenuBar JPasswordField)
@@ -13,12 +13,12 @@
 
 
 (defn nat-traversal [host1 port1 host2 port2]
-  (println host1 port1 host2 port2) 
+  (info "Starting NAT traversal: " host1 port1 host2 port2) 
   (loop [] 
    (try
     (let [
         forwarder (fn[is os knock] 
-         (println "Port-forwarded direction opened")
+         (debug "Port-forwarded direction opened")
          (let [buffer (byte-array 65536)]
           (loop [knocked false]
            (let [ret (.read is buffer)]
@@ -29,11 +29,11 @@
                (recur true)))))
          (.close os)
          (.close is)
-         (println "Port-forwarded direction closed"))
+         (debug "Port-forwarded direction closed"))
         socket1 (java.net.Socket.), socket2 (java.net.Socket.)]
       (.connect socket1 (java.net.InetSocketAddress. host1 port1))
       (.connect socket2 (java.net.InetSocketAddress. host2 port2))
-      (println "Port-forwarded connection establised")
+      (debug "Port-forwarded connection establised")
       (let [
         is1 (.getInputStream socket1)
         is2 (.getInputStream socket2)
@@ -44,7 +44,7 @@
            (forwarder is2 os1 (fn[])))))
        (forwarder is1 os2 (fn[]))
       ))
-    (catch Exception e (println e)))
+    (catch Exception e (error "NAT Traversal " e)))
    (Thread/sleep 10000) 
    (recur)))
 
@@ -94,7 +94,7 @@
             ]
             (.put prefs "nat_traverse" line)
             (nat-traversal host1 port1 host2 port2))))
-       (catch Exception e (println e)))))))
+       (catch Exception e (error "NAT tr setup " e)))))))
     {Action/SHORT_DESCRIPTION  "Connect to both hosts and exchange data"})
   tooltips {
     :server "IP[:port] of the host to SSH into"

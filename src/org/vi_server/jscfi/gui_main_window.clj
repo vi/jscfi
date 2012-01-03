@@ -5,7 +5,7 @@
     (:use org.vi-server.jscfi.gui-task-window)
     (:use org.vi-server.jscfi.gui-authentication-window)
     (:use org.vi-server.jscfi.gui-settings-window)
-    (:use clojure.tools.logging)
+    (:use [clojure.tools.logging :only [info warn error debug]])
     (:import 
      (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
      (javax.swing JMenu JMenuBar JPasswordField)

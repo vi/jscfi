@@ -5,7 +5,7 @@
  (:use org.vi-server.jscfi.jscfi)
  (:use [clojure.string :only [split join upper-case lower-case trim blank?]])
  (:use [clojure.string :only [trim-newline]])
- (:use clojure.tools.logging)
+ (:use [clojure.tools.logging :only [info warn error debug trace]])
  ;(:require [org.danlarkin.json :as json])
  ;(:require [clj-yaml.core :as yaml])
  (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp SftpException SftpATTRS))
@@ -15,10 +15,12 @@
 (def scripts-path (atom ""))
 
 (defn read-script-from-jar [script-name]
+ (trace "Reading script from system resource")
  (slurp (ClassLoader/getSystemResourceAsStream 
 	 (str "org/vi_server/jscfi/scripts/" script-name))))
 
 (defn read-script-from-file [script-name]
+ (trace "Reading script from file")
  (slurp 
   (-> @scripts-path
    (java.io.File.) 
@@ -29,15 +31,17 @@
    (java.io.FileInputStream.))))
 
 (defn read-script-noformat [script-name] 
+  (trace "Reading script " script-name)
   (if (empty? @scripts-path)
    (read-script-from-jar script-name)
    (try 
     (read-script-from-file script-name)
-    (catch Exception e (println e) 
-     (println "Using embedded version of " script-name)
+    (catch Exception e (error e) 
+     (warn "Using embedded version of " script-name)
      (read-script-from-jar script-name)))))
 
 (defn read-script [script-name & args] 
+ (info (format "Reading script %s with format arguments %s"  script-name args))
  (apply format (read-script-noformat script-name) args))
 
 (defn serialise [object]
@@ -46,55 +50,57 @@
 (defn deserialise [string] (read-string string))
 
 (defn ssh-execute-output [session command input-str output]
- (println "ssh-execute-output" command)
+ (info "ssh-execute-output")
+ (debug (str "command: " command))
  (try
   (let [
    channel (.openChannel session "exec")
    input (if input-str (java.io.ByteArrayInputStream. (.getBytes input-str)) nil)
    ]
-   (println "ssh-execute-output stage 2")
+   (debug "ssh-execute-output stage 2")
    (doto channel
     (.setOutputStream output)
     (.setExtOutputStream System/err)
     (.setInputStream input)
     (.setCommand command)
     (.connect 3000))
-   (println "ssh-execute-output progress"))
-  (catch Exception e (.printStackTrace e) (println "ssh-execute fail" e) nil)))
+   (debug "ssh-execute-output progress"))
+  (catch Exception e (.printStackTrace e) (error "ssh-execute fail" e) nil)))
 
 
 (defn ^String ssh-execute [session command input-str]
- (println "ssh-execute" command)
+ (info "ssh-execute")
+ (debug (str "command: " command))
  (try
   (let [
    channel (.openChannel session "exec")
    output (java.io.ByteArrayOutputStream.)
    input (if input-str (java.io.ByteArrayInputStream. (.getBytes input-str)) nil)
    ]
-   (println "ssh-execute stage 2")
+   (debug "ssh-execute stage 2")
    (doto channel
     (.setOutputStream output)
     (.setExtOutputStream System/err)
     (.setInputStream input)
     (.setCommand command)
     (.connect 3000))
-   (println "ssh-execute progress")
+   (debug "ssh-execute progress")
    (while (not (.isClosed channel)) (Thread/sleep 100))
-   (println "ssh-execute finished")
+   (debug "ssh-execute finished")
    (str output))
-  (catch Exception e (.printStackTrace e) (println "ssh-execute fail" e) nil)))
+  (catch Exception e (.printStackTrace e) (error "ssh-execute fail" e) nil)))
 
 (defn ssh-upload [sftp file-or-dir destination]
-    (println "ssh-upload " file-or-dir " " destination)
+    (info "ssh-upload " file-or-dir " " destination)
     (let [f (File. file-or-dir)]
      (if (.isDirectory f)
       (do
        (.mkdir sftp destination)
-       (doall (map (fn[x] (println x) (ssh-upload sftp (str file-or-dir "/" x) (str destination "/" x))) (.list f)))
-      )
+       (doall (map 
+        (fn[x] (debug (str "U "x)) (ssh-upload sftp (str file-or-dir "/" x) (str destination "/" x))) (.list f))))
       (.put sftp file-or-dir destination ChannelSftp/OVERWRITE))))
 (defn ssh-download [sftp file-or-dir destination]
-    (println "ssh-download " file-or-dir " " destination)
+    (info "ssh-download " file-or-dir " " destination)
     (if (.isDir (.stat sftp file-or-dir))
      (let [f (File. destination)]
       (when-not (.exists f) (.mkdir f))
@@ -102,7 +108,7 @@
 	(fn[x]
 	 (let [n (.getFilename x)]
 	  (when (and (not= n ".") (not= n ".."))
-	   (println x) (ssh-download sftp (str file-or-dir "/" n) (str destination "/" n))))) 
+	   (debug (str "D "x)) (ssh-download sftp (str file-or-dir "/" n) (str destination "/" n))))) 
        (.ls sftp file-or-dir))))
      (.get sftp file-or-dir destination)))
 
@@ -116,14 +122,15 @@
    (let [observers (:observers state)] 
     (doall (map (fn[observer]
      (try (closure observer) 
-      (catch Exception e (println "Observe exception: " e))
+      (catch Exception e (error "Observe exception: " e))
       (catch AbstractMethodError e "Just ignoring, observer can omit methods"))
      ) observers)))
-  (catch Exception e (println e))) state)))
+  (catch Exception e (error "emit-impl" e))) state)))
 (defmacro emit [mname & whatever] "Send a signal to all observers (delayed)"
  `(emit-impl ~'state-agent (fn[~'observer11] (~mname ~'observer11 ~@whatever))))
 
 (defn persist-tasks [session state-agent tasks]
+    (info "Persisting tasks")
     (ssh-execute session (read-script "save-tasks.txt" (:directory @state-agent)) (serialise tasks))
     (emit something-changed)
     tasks
@@ -191,8 +198,7 @@
 (defmacro ^{:private true} rj-method [name add-args & new-state] #_"For use inside JscfiImpl. Defines numerous parameters, handles exceptions. Implementatation should always return new status (for example, by finishing with call to 'newtasks'), otherwise it will spoil this session."
  `(~name  [~'this ~@add-args] 
      (when-let [~'err (agent-error ~'state-agent)]
-      (println "Agent errror: ")
-      (println (get-string-stack-trace ~'err))
+      (error "Agent errror" ~'err)
       (restart-agent ~'state-agent @~'state-agent))
      (send ~'state-agent 
       (fn[~'state] ;; does not need to be hygienic
@@ -206,7 +212,7 @@
 	] 
 	(try
 	 ~@new-state
-	 (catch Exception ~'e (println "rj-method exception" (class ~'e) (get-string-stack-trace ~'e)) ~'state)))))
+	 (catch Exception ~'e (error "rj-method exception" (class ~'e) (get-string-stack-trace ~'e)) ~'state)))))
      nil))
 
 
@@ -225,7 +231,7 @@
 	 tasklist (ssh-execute session (read-script "qstat.txt" directory) nil)
 	 qstat (interpret-task-list tasklist)
 	 ]
-	 (println "Periodic qstat")
+	 (info "Periodic qstat")
 	 (let [
 	  pbs-id-to-task-id-map (reduce (fn[col task] 
 		(if (and (:pbs-id task) (contains? #{:running :scheduled} (:status task))) (assoc col (:pbs-id task) (:id task)) col)) {} (vals tasks))
@@ -237,7 +243,7 @@
 
 	  tasks-new (reduce (fn[col tid] 
 	    (assoc col tid (assoc (get tasks tid) :status :need-check-for-completedness))) tasks completed-task-ids)
-	  _ (println "Completed tasks:" completed-task-ids)
+	  _ (info"Completed tasks:" completed-task-ids)
 	  states-of-qstat-tasks (into {} (map (fn[x] [(:job-id x) (:job_state x)]) qstat))
 	  tasks-new2 (into {} (map (fn[t] [(first t) (let 
 	    [
@@ -245,7 +251,7 @@
 	    task-new (if (= (:status task) :need-check-for-completedness) (let 
 	     [
 	     check-result (ssh-execute session (read-script "check_completedness.txt" directory (:id task)) nil) 
-	     _ (println "Comleteness check for " (:id task) " (" (:pbs-id task) ",", (:status task), "): " check-result)
+	     _ (info "Comleteness check for " (:id task) " (" (:pbs-id task) ",", (:status task), "): " check-result)
 	     timing (ssh-execute session (read-script "read_timing.txt" directory (:id task)) nil) 
 	     task-new-inner (-> task 
 		    (assoc :completed-date check-result) 
@@ -272,26 +278,26 @@
      :single-lammps-file
      :directory-with-lammps-file
      ])
-    (register-task [this task] (println "Task registered") (println task) (let [rnd-id (.toString (rand))] 
+    (register-task [this task] (info "Task registered") (debug (str "task data: " task)) (let [rnd-id (.toString (rand))] 
 	(send state-agent #(assoc % :tasks (persist-tasks (:session %) state-agent (assoc (:tasks %) rnd-id 
 	    (-> task (assoc :id rnd-id) (assoc :status :created))))))
 	rnd-id))
-    (rj-method alter-task (task) (println "Task altered") (newtasks (assoc tasks (:id task) task)))
-    (rj-method remove-task (task-id) (println "Task removed") (newtasks (dissoc tasks task-id)))
+    (rj-method alter-task (task) (info "Task altered") (newtasks (assoc tasks (:id task) task)))
+    (rj-method remove-task (task-id) (info "Task removed") (newtasks (dissoc tasks task-id)))
 
     (rj-method compile-task (task-id) 
-     (println "Compile task") 
+     (info "Compile task") 
      (let [task (get tasks task-id)]
       (let [sftp (.openChannel session "sftp")]
        (.connect sftp 3000)
        (try 
 	(.mkdir sftp (format "jscfi/%s/%s" directory (:id task))) 
-	(catch SftpException e (println "The directory does already exist"))
-    (catch Exception e (println "Running on buggy Clojure 1.3?" e)))
+	(catch SftpException e (info "The directory does already exist"))
+    (catch Exception e (error "Running on buggy Clojure 1.3?" e)))
        (ssh-execute session (format "rm -Rf jscfi/%s/%s/source.c" directory (:id task)) nil)
        (ssh-upload sftp (:source-file task) (format "jscfi/%s/%s/source.c" directory (:id task)))
        (.disconnect sftp))
-      (println "Source code uploaded")
+      (info "Source code uploaded")
       (let [
        script (get {
 	:single-c-file "compile.txt"
@@ -304,7 +310,7 @@
        compilation-result (ssh-execute session (read-script script directory (:id task)) nil)
        compilation-ok (ssh-execute session (read-script "compile-ret.txt" directory (:id task)) nil)
        ]
-       (println "Compilation:" compilation-ok)
+       (info "Compilation:" compilation-ok)
        (if 
 	     (not= compilation-ok "0")
 	     (do (emit compilation-failed task compilation-result) 
@@ -314,7 +320,7 @@
      )))
 
     (rj-method schedule-task (task-id) 
-     (println "Schedule task") 
+     (info "Schedule task") 
      (let [task (get tasks task-id)]
       (let [
        run-pbs-file (get {
@@ -329,7 +335,7 @@
 	   (read-script "schedule.txt" directory (:id task))
 	   (read-script run-pbs-file (:walltime task) (:node-count task) (:name task) directory (:id task) (:cmdadd task))))
        ]
-       (println "Schedule id:" schedule-result)
+       (info "Scheduler id:" schedule-result)
        (if 
 	(= schedule-result "")
         (do (emit compilation-failed task schedule-result) state)
@@ -338,53 +344,53 @@
      )))
 
     (rj-method cancel-task (task-id) 
-     (println "Call qdel for the task") 
+     (info "Call qdel for the task") 
      (let [task (get tasks task-id)]
         (ssh-execute session (read-script "cancel.txt" directory (:id task) (:pbs-id task)) nil)
 	state))
     
     (rj-method purge-task (task-id) 
-     (println "Purge task")
+     (info "Purge task")
      (let [task (get tasks task-id)]
       (ssh-execute session (read-script "purge.txt" directory (:id task)) nil)
       (newtasks (assoc tasks task-id (assoc task :status :purged)))))
 
     (rj-method upload-task (task-id) 
-     (println "Uploading input file") 
+     (info "Uploading input file") 
      (let [task (get tasks task-id)]
       (let [sftp (.openChannel session "sftp")]
        (.connect sftp 3000)
        (ssh-execute session (format "rm -Rf jscfi/%s/%s/input.txt" directory (:id task)) nil)
        (ssh-upload sftp (:input-file task) (format "jscfi/%s/%s/input.txt" directory (:id task)))
        (.disconnect sftp))
-      (println "Input file uploaded")
+      (info "Input file uploaded")
       (emit message task "Input file[s] uploaded")
       ) state)
 
     (rj-method download-task (task-id) 
-     (println "Downloading output file") 
+     (info "Downloading output file") 
      (let [task (get tasks task-id)]
       (let [sftp (.openChannel session "sftp")]
        (.connect sftp 3000)
        (ssh-download sftp (format "jscfi/%s/%s/output.txt" directory (:id task)) (:output-file task))
        (.disconnect sftp))
-      (println "Output file downloaded")
+      (info "Output file downloaded")
       (emit message task (format "Output file[s] downloaded to %s" (:output-file task)))
      ) state)
 
     (rj-method download-all-task (task-id) 
-     (println "Downloading output file") 
+     (info "Downloading output file") 
      (let [task (get tasks task-id)]
       (let [sftp (.openChannel session "sftp")]
        (.connect sftp 3000)
        (ssh-download sftp (format "jscfi/%s/%s/" directory (:id task)) (str (:output-file task) ".all"))
        (.disconnect sftp))
-      (println "Output file downloaded")
+      (info "Output file downloaded")
       (emit message task (format "All task file[s] downloaded to %s.all" (:output-file task)))
       ) state)
     
     (rj-method nodes-stats (task-id) 
-     (println "Collect stats about nodes the task is running on") 
+     (info "Collect stats about nodes the task is running on") 
      (let [
       task (get tasks task-id)
       result (ssh-execute session (read-script "nodes_stats.txt" directory (:id task) (:pbs-id task)) nil)
@@ -393,7 +399,7 @@
 	state))
     
     (rj-method terminate-task (task-id) 
-     (println "Terminating mpiruns and all our tasks in our nodes") 
+     (info "Terminating mpiruns and all our tasks in our nodes") 
      (let [
       task (get tasks task-id)
       result (ssh-execute session (read-script "terminate-task.txt" directory (:id task) (:pbs-id task)) nil)
@@ -411,7 +417,7 @@
 	    state)
     
     (monitor-task [this task-id output]
-     (println "Monitor this task") 
+     (info "Monitor this task") 
      (let [
        state @state-agent
        session (:session state)
@@ -423,7 +429,7 @@
     )
     
     (monitor-nodes [this node-list output]
-     (println "Monitor nodes " node-list) 
+     (info "Monitor nodes " node-list)
      (let [
        state @state-agent
        session (:session state)
@@ -436,7 +442,7 @@
     (rj-method add-observer (observer_) (assoc state :observers (conj observers observer_)))
     (rj-method remove-observer (observer_) (assoc state :observers (disj observers observer_)))
 
-    (debug-print [this] (println @state-agent))
+    (debug-print [this] (warn @state-agent))
 
     (connect [this auth-observer address username directory]
 	 (send state-agent (fn[state]
@@ -458,14 +464,14 @@
 	    password-attempts (atom 0)
 	    ui (proxy [UserInfo UIKeyboardInteractive][]
 		(promptYesNo               [message] 
-		    (println message) (connection-stage auth-observer message) (println "(Accepting it)") true)
-		(promptPassphrase          [message] (println message) (connection-stage auth-observer message) true)
-		(promptPassword            [message] (println message) (connection-stage auth-observer message) true)
-		(promptKeyboardInteractive [message] (println message) (connection-stage auth-observer message) true)
+		    (warn message) (connection-stage auth-observer message) (warn "(Accepting it)") true)
+		(promptPassphrase          [message] (info message) (connection-stage auth-observer message) true)
+		(promptPassword            [message] (info message) (connection-stage auth-observer message) true)
+		(promptKeyboardInteractive [message] (info message) (connection-stage auth-observer message) true)
 		(getPassword [] 
 		 (when (> @password-attempts 0) 
 		  (throw (Exception. "Invalid password")))
-		 (println "*** Trying password authentication")
+		 (info "*** Trying password authentication")
 		 (swap! password-attempts inc)
 		 (get-password auth-observer)
 		 )
@@ -481,16 +487,16 @@
          (try
           (let [scripts-version-number "2"]
            (when (not= (ssh-execute session (read-script "check-scripts-version.txt") nil) scripts-version-number)
-            (println "Uploading some scripts to server")
+            (info "Uploading some scripts to server")
             (ssh-execute session (read-script "upload-scripts-prepare.txt") 
                 (read-script "upload-scripts.sh"
                     scripts-version-number
                     (read-script-noformat "fdlinecombine.c")
                     (read-script-noformat "nodestatworker")
                     (read-script-noformat "diststatcollect")))
-            (println "Finished uploading")))
+            (info "Finished uploading")))
            (catch Exception e
-	        (println e)
+	        (error "connect" e)
 	        (connection-stage auth-observer (.toString e))))
 	     (let [tasks (interpret-tasks (ssh-execute session (read-script "read-tasks.txt" directory) nil))]
 	      (-> state 
@@ -501,7 +507,7 @@
 	       (assoc :directory directory)
 	      ))
 	     (catch Exception e 
-	      (println e)
+	      (error "ex6" e)
 	      (auth-failed auth-observer)
 	      (connection-stage auth-observer (.toString e))
 	      state)
