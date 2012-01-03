@@ -72,5 +72,6 @@
     (check-nodes-loadavg [this])
     
     (debug-print [this])
+    (close-connection [this])
 )
 

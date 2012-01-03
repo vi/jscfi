@@ -442,6 +442,11 @@
     (rj-method add-observer (observer_) (assoc state :observers (conj observers observer_)))
     (rj-method remove-observer (observer_) (assoc state :observers (disj observers observer_)))
 
+    (close-connection [this] 
+     (try
+      (.disconnect (:session @state-agent))
+      (catch Exception e (error (class e) (get-string-stack-trace e)))))
+
     (debug-print [this] (warn @state-agent))
 
     (connect [this auth-observer address username directory]
