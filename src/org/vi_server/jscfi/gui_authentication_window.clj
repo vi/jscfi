@@ -95,6 +95,18 @@
             (nat-traversal host1 port1 host2 port2))))
        (catch Exception e (println e)))))))
     {Action/SHORT_DESCRIPTION  "Connect to both hosts and exchange data"})
+  tooltips {
+    :server "IP[:port] of the host to SSH into"
+    :login "SSH user name"
+    :password "SSH password"
+    :keyfile "<html>SSH keyfile (used instead of password)<br/>
+        Look for $HOME/.ssh/id_rsa on server for it or generate your own<br/>
+        and place pubkey to $HOME/.ssh/authorized_keys on server</html>"
+    :directory "<html>Subdirectory on server to store Jscfi files on.<br/>
+        Allows (somewhat limited) usage of Jscfi by separate persons with single SSH account</html>"
+    :nat "<html>Connect to both IP:port and exchange traffic, reconnect on error.<br/>
+        'Invites' somebody from Internet to connect to this inaccessible-by-default server</html>"
+  }
   ]
   (doto frame 
    (.setSize 430 300)
@@ -103,23 +115,23 @@
    (.setTitle (format "Login to SCFI; v%s" jscfi-version))
   )
   (doto panel
-   (.add (JLabel. "Server:"))
+   (.add (doto (JLabel. "Server:") (.setToolTipText (:server tooltips))))
    (.add server-field "growx,wrap,span 2")
 
-   (.add (JLabel. "Login:"))
+   (.add (doto (JLabel. "Login:") (.setToolTipText (:login tooltips))))
    (.add user-field "growx,wrap,span 2")
 
-   (.add (JLabel. "Password:"))
+   (.add (doto (JLabel. "Password:") (.setToolTipText (:password tooltips))))
    (.add password-field "growx,wrap,span 2")
 
-   (.add (JLabel. "Keyfile:"))
+   (.add (doto (JLabel. "Keyfile:") (.setToolTipText (:keyfile tooltips))))
    (.add keyfile-field "growx")
    (.add (create-file-chooser-button keyfile-field :open) "wrap")
 
-   (.add (JLabel. "Directory:"))
+   (.add (doto (JLabel. "Directory:") (.setToolTipText (:directory tooltips))))
    (.add directory-field "growx,wrap,span 2")
    
-   (.add (JLabel. "NAT traversal:"))
+   (.add (doto (JLabel. "NAT traversal:") (.setToolTipText (:nat tooltips))))
    (.add nat-traversal-field "growx")
    (.add (JButton. action-nat) "wrap")
 
