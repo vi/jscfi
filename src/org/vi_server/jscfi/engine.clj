@@ -205,7 +205,7 @@
 	] 
 	(try
 	 ~@new-state
-	 (catch Exception ~'e (.printStackTrace ~'e) (println "Exception:" ~'e) ~'state)))))
+	 (catch Exception ~'e (println "rj-method exception" (class ~'e) (get-string-stack-trace ~'e)) ~'state)))))
      nil))
 
 
