@@ -2,3 +2,7 @@ GUI for uploading and starting tasks at BSU SCPI supercomputer (or other Torque+
 Written in Clojure/Swing.
 
 Binary snapshots available at http://vi-server.org/pub/
+
+To build it from source use "leiningen" tool ("lein uberjar" command)
+
+"java.util.zip.ZipException: duplicate entry" => buggy leinigen, use newer fixed version (or some legacy one)
