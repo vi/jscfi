@@ -3,8 +3,8 @@
  (:use clojure.walk)
  (:use [clojure.set :only [difference intersection]])
  (:use org.vi-server.jscfi.jscfi)
- (:use [clojure.contrib.string :only [split join upper-case lower-case trim blank?]])
- (:use [clojure.contrib.str-utils :only [chomp]])
+ (:use [clojure.string :only [split join upper-case lower-case trim blank?]])
+ (:use [clojure.string :only [trim-newline]])
  (:use clojure.tools.logging)
  ;(:require [org.danlarkin.json :as json])
  ;(:require [clj-yaml.core :as yaml])
@@ -163,11 +163,11 @@
     submit_args = run.pbs 
     ")
     (let [
-     taskwise (filter #(not (empty? %)) (split #"Job Id: " qstat-output))
+     taskwise (filter #(not (empty? %)) (split qstat-output #"Job Id: "))
      ]
      (map (fn[task-description] 
 	(let [
-	 strings (split #"\n\s+" task-description)
+	 strings (split task-description #"\n\s+")
 	 task-id (first strings)
 	 strprops (next strings)
 	 properties (reduce (fn [coll strprop] 
@@ -325,7 +325,7 @@
 	:single-lammps-file "run.pbs.lammps.txt"
 	:directory-with-lammps-file "run.pbs.lammpsdir.txt"
         } (:source-mode task))
-       schedule-result (chomp (ssh-execute session 
+       schedule-result (trim-newline (ssh-execute session 
 	   (read-script "schedule.txt" directory (:id task))
 	   (read-script run-pbs-file (:walltime task) (:node-count task) (:name task) directory (:id task) (:cmdadd task))))
        ]
