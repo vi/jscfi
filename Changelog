@@ -1,3 +1,11 @@
+jscfi-1.6:
+	1. Tooltips for settigns and login window
+	2. Using log4j inside
+	3. Quick restarting of Jscfi to assist debugging
+
+jscfi-1.5:
+	1. Extracting and using source code in external directory
+
 jscfi-1.4:
 	1. Commands to get list and status of your nodes
 	2. Starting monitoring on node list (without task)
