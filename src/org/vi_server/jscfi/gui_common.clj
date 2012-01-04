@@ -5,7 +5,35 @@
 
 (def jscfi-version "1.5")
 
-(def settings (atom nil)) ;; initialized in gui_settings_window.clj
+(defn load-settings []
+  (let [
+    prefs (.node (java.util.prefs.Preferences/userRoot) "/org/vi-server/jscfi")
+    known-hosts (.get prefs "known_hosts" "")
+    log-viewer (.get prefs "log_viewer" "")
+    source-directory (.get prefs "source_directory" "")
+
+    ;; if known_hosts is not saved in preferences, try to detect it
+    known-hosts2 
+     (try
+      (if (empty? known-hosts)
+       (let [
+        c1 (System/getenv "HOME")
+        c2 (System/getenv "APPDATA")
+        ]
+        (if c2
+         (str c2 "\\known_hosts")
+         (when c1 
+          (.mkdirs (java.io.File. (str c1 "/.ssh")))
+          (str c1 "/.ssh/known_hosts")
+          )))
+       known-hosts)
+      (catch Exception e (.printStackTrace e) known-hosts))
+   ]
+   {:known-hosts known-hosts2, :log-viewer log-viewer, :source-directory source-directory}   
+  )
+ )
+
+(def settings (atom (load-settings)))
 
 (defn create-action "Creates an implementation of AbstractAction." [name behavior options]
  (let [
