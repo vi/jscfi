@@ -28,6 +28,10 @@
     (net.miginfocom.swing MigLayout)
     (org.vi_server.jscfi.jscfi AuthObserver)))
 
+
+(def authentication-window-size {:width 430 , :height 300})
+
+
 (defn nat-traversal [host1 port1 host2 port2]
   (info "Starting NAT traversal: " host1 port1 host2 port2) 
   (loop [] 
@@ -126,7 +130,7 @@
   }
   ]
   (doto frame 
-   (.setSize 430 300)
+   (.setSize (:width authentication-window-size) (:height authentication-window-size))
    (.setContentPane panel)
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (exit-if-needed))))
    (.setTitle (format "Login to SCFI; v%s" jscfi-version))

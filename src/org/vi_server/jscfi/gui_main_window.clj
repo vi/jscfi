@@ -46,6 +46,10 @@
     (org.vi_server.jscfi.jscfi JscfiObserver)))
 
 
+(def main-window-size {:width 600, :height 400 })
+(def textinfo-window-size {:width 600, :height 400 })
+
+
 (defprotocol TaskListEntry (task [this]))
 (deftype TaskListEntryImpl [task] TaskListEntry
     (toString [this] (format "%s    %s    %s    %s" (:status task) (:source-file task) (:name task) (:pbs-id task)))
@@ -58,7 +62,7 @@
   textarea (JTextArea.)
   ]
   (doto frame 
-   (.setSize 600 400)
+   (.setSize (:width textinfo-window-size) (:height textinfo-window-size))
    (.setContentPane panel)
    (.setLocationRelativeTo nil)
    (.setTitle "Text info"))
@@ -147,7 +151,7 @@
   )
   ]
   (doto frame 
-   (.setSize 600 400)
+   (.setSize (:width main-window-size) (:height main-window-size))
    (.setContentPane panel)
    (.setJMenuBar menubar)
    (.setLocationRelativeTo nil)

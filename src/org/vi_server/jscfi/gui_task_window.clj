@@ -44,6 +44,7 @@
     (net.miginfocom.swing MigLayout)
     (org.vi_server.jscfi.jscfi JscfiObserver)))
 
+(def task-window-size {:width 600, :height 500})
 
 (def button-enabledness-per-status {
  :created      #{:compile :remove},
@@ -285,7 +286,7 @@
       (something-changed [this] (SwingUtilities/invokeLater reread-task-info)))
   ]
   (doto frame 
-   (.setSize 600 500)
+   (.setSize (:width task-window-size) (:height task-window-size))
    (.setContentPane panel)
    (.setTitle "Jscfi task")
    (.addWindowListener (proxy [WindowAdapter] [] (windowClosing [_] (remove-observer jscfi observer))))

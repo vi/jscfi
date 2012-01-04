@@ -10,6 +10,7 @@
     (javax.swing Action JButton JFrame JLabel JPanel JTextField)
     (net.miginfocom.swing MigLayout)))
 
+(def settings-window-size {:width 430, :height 170})
 
 (defn extract-source-code [target-directory]
     (let [tdu (str (.toURI (java.io.File. target-directory)))]
@@ -65,7 +66,7 @@
     ) {Action/SHORT_DESCRIPTION  "Extract the source code of this Jscfi into 'Jscfi source dir' directory'"})
   ]
   (doto frame 
-   (.setSize 430 170)
+   (.setSize (:width settings-window-size) (:height settings-window-size))
    (.setContentPane panel)
    (.setTitle "Jscfi settings")
   )
