@@ -1,16 +1,32 @@
 (ns org.vi-server.jscfi.gui-authentication-window
-    "GUI for Jscfi (authentication window)"
-    (:use org.vi-server.jscfi.jscfi)
-    (:use org.vi-server.jscfi.gui-common)
-    (:use org.vi-server.jscfi.gui-settings-window)
-    (:use [clojure.tools.logging :only [info warn error debug]])
-    (:import 
-     (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
-     (javax.swing JMenu JMenuBar JPasswordField)
-     (java.awt.event KeyEvent MouseAdapter WindowAdapter)
-     (java.awt Event)
-     (net.miginfocom.swing MigLayout)))
-
+  "GUI for Jscfi (authentication window)"
+  (:use
+    [clojure.tools.logging :only [debug error info warn]]
+    [org.vi-server.jscfi.gui-common
+     :only
+     [create-action
+      create-file-chooser-button
+      exit-if-needed
+      jscfi-version
+      msgbox
+      settings]]
+    [org.vi-server.jscfi.gui-settings-window
+     :only
+     [create-settings-window]]
+    [org.vi-server.jscfi.jscfi :only [connect]])
+  (:import
+    (java.awt.event WindowAdapter)
+    (javax.swing
+      Action
+      JButton
+      JFrame
+      JLabel
+      JPanel
+      JPasswordField
+      JTextField
+      SwingUtilities)
+    (net.miginfocom.swing MigLayout)
+    (org.vi_server.jscfi.jscfi AuthObserver)))
 
 (defn nat-traversal [host1 port1 host2 port2]
   (info "Starting NAT traversal: " host1 port1 host2 port2) 

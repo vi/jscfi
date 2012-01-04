@@ -9,6 +9,7 @@
 		  [com/jcraft/jsch "0.1.44-1"]
           [log4j "1.2.15" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
 		  ]
+    :dev-dependencies [[slamhound "1.2.0"]]
     :main org.vi-server.jscfi.main2
     :java-source-path "src"
 )

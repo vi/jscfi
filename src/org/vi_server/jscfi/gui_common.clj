@@ -1,7 +1,14 @@
 (ns org.vi-server.jscfi.gui-common
-    "Common things for Jscfi's GUI"
-    (:use [clojure.tools.logging :only [info warn error debug]])
-    (:import (javax.swing AbstractAction Action JButton JFileChooser SwingUtilities JComboBox)))
+  "Common things for Jscfi's GUI"
+  (:use [clojure.tools.logging :only [debug error info warn]])
+  (:import
+    (javax.swing
+      AbstractAction
+      JButton
+      JComboBox
+      JFileChooser
+      SwingUtilities)))
+
 
 (def jscfi-version "1.6")
 

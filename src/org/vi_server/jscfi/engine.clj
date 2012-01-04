@@ -1,16 +1,33 @@
 (ns org.vi-server.jscfi.engine
- "Jscfi interface implementation. Interacts with with SSH and does all functions."
- (:use clojure.walk)
- (:use [clojure.set :only [difference intersection]])
- (:use org.vi-server.jscfi.jscfi)
- (:use [clojure.string :only [split join upper-case lower-case trim blank?]])
- (:use [clojure.string :only [trim-newline]])
- (:use [clojure.tools.logging :only [info warn error debug trace]])
- ;(:require [org.danlarkin.json :as json])
- ;(:require [clj-yaml.core :as yaml])
- (:import (com.jcraft.jsch JSch Channel Session UserInfo UIKeyboardInteractive ChannelSftp SftpException SftpATTRS))
- (:import (java.io ByteArrayInputStream File))
- )  
+  "Jscfi engine. Implements facade. Interacts with with SSH and starts all scripts."
+  (:use
+    [clojure.set :only [difference]]
+    [clojure.string :only [split trim-newline]]
+    [clojure.tools.logging :only [debug error info trace warn]]
+    [clojure.walk :only [macroexpand-all prewalk]]
+    [org.vi-server.jscfi.jscfi
+     :only
+     [auth-failed
+      auth-succeed
+      compilation-failed
+      connected
+      connection-stage
+      get-hostsfile
+      get-keyfile
+      get-password
+      get-task
+      message
+      something-changed
+      text-info]])
+  (:import
+    (com.jcraft.jsch
+      ChannelSftp
+      JSch
+      SftpException
+      UIKeyboardInteractive
+      UserInfo)
+    (java.io File)
+    (org.vi_server.jscfi.jscfi Jscfi)))
 
 (def scripts-path (atom ""))
 

@@ -1,18 +1,50 @@
 (ns org.vi-server.jscfi.gui-main-window
-    "GUI for Jscfi (main window)"
-    (:use org.vi-server.jscfi.jscfi)
-    (:use org.vi-server.jscfi.gui-common)
-    (:use org.vi-server.jscfi.gui-task-window)
-    (:use org.vi-server.jscfi.gui-authentication-window)
-    (:use org.vi-server.jscfi.gui-settings-window)
-    (:use [clojure.tools.logging :only [info warn error debug]])
-    (:import 
-     (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
-     (javax.swing JMenu JMenuBar JPasswordField)
-     (java.awt.event KeyEvent MouseAdapter WindowAdapter)
-     (java.awt Event)
-     (net.miginfocom.swing MigLayout))
-    (:import (java.util TimerTask Timer)))
+  "GUI for Jscfi (main window)"
+  (:use
+    [clojure.tools.logging :only [info warn info debug]]
+    [org.vi-server.jscfi.gui-authentication-window
+     :only
+     [create-authentication-window]]
+    [org.vi-server.jscfi.gui-common
+     :only
+     [create-action
+      exit-if-needed
+      get-monitoring-output
+      jscfi-version
+      msgbox]]
+    [org.vi-server.jscfi.gui-settings-window
+     :only
+     [create-settings-window]]
+    [org.vi-server.jscfi.gui-task-window :only [create-task-window]]
+    [org.vi-server.jscfi.jscfi
+     :only
+     [add-observer
+      check-nodes-loadavg
+      check-your-nodes
+      close-connection
+      debug-print
+      get-tasks
+      monitor-nodes
+      periodic-update
+      read-your-nodes]])
+  (:import
+    (java.awt Event)
+    (java.awt.event KeyEvent MouseAdapter WindowAdapter)
+    (java.util Timer TimerTask)
+    (javax.swing
+      Action
+      DefaultListModel
+      JFrame
+      JList
+      JMenu
+      JMenuBar
+      JPanel
+      JScrollPane
+      JTextArea
+      KeyStroke
+      SwingUtilities)
+    (org.vi_server.jscfi.jscfi JscfiObserver)))
+
 
 (defprotocol TaskListEntry (task [this]))
 (deftype TaskListEntryImpl [task] TaskListEntry
@@ -21,7 +53,7 @@
 
 (defn create-textinfo-window [text]
  (let [
-  panel (JPanel. (MigLayout. "", "[grow]", "[grow]"))
+  panel (JPanel. (net.miginfocom.swing.MigLayout. "", "[grow]", "[grow]"))
   frame (JFrame.)
   textarea (JTextArea.)
   ]
@@ -38,7 +70,7 @@
 
 (defn create-main-window [jscfi] 
  (let [
-  panel (JPanel. (MigLayout. "", "[grow][pref][pref]", "[grow]"))
+  panel (JPanel. (net.miginfocom.swing.MigLayout. "", "[grow][pref][pref]", "[grow]"))
   frame (JFrame.)
   timer (Timer.)
   list-model (DefaultListModel.)

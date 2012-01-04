@@ -1,15 +1,49 @@
 (ns org.vi-server.jscfi.gui-task-window
-    "GUI for Jscfi's task window"
-    (:use org.vi-server.jscfi.jscfi)
-    (:use org.vi-server.jscfi.gui-common)
-    (:use org.vi-server.jscfi.gui-settings-window)
-    (:use [clojure.tools.logging :only [info warn error debug]])
-    (:import 
-     (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
-     (javax.swing JMenu JMenuBar JPasswordField)
-     (java.awt.event KeyEvent MouseAdapter WindowAdapter)
-     (java.awt Event)
-     (net.miginfocom.swing MigLayout)))
+  "GUI for Jscfi's task window"
+  (:use
+    [clojure.tools.logging :only [error info warn debug]]
+    [org.vi-server.jscfi.gui-common
+     :only
+     [combobox-create
+      combobox-field
+      combobox-get
+      combobox-set
+      create-action
+      create-file-chooser-button
+      get-monitoring-output
+      msgbox]]
+    [org.vi-server.jscfi.jscfi
+     :only
+     [add-observer
+      alter-task
+      cancel-task
+      compile-task
+      download-all-task
+      download-task
+      get-source-modes
+      get-task
+      monitor-task
+      nodes-stats
+      purge-task
+      register-task
+      remove-observer
+      remove-task
+      schedule-task
+      terminate-task
+      upload-task]])
+  (:import
+    (java.awt.event WindowAdapter)
+    (javax.swing
+      Action
+      JButton
+      JFrame
+      JLabel
+      JPanel
+      JTextField
+      SwingUtilities)
+    (net.miginfocom.swing MigLayout)
+    (org.vi_server.jscfi.jscfi JscfiObserver)))
+
 
 (def button-enabledness-per-status {
  :created      #{:compile :remove},

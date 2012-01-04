@@ -1,14 +1,15 @@
 (ns org.vi-server.jscfi.gui-settings-window
-    "GUI for Jscfi (settings window)"
-    (:use org.vi-server.jscfi.gui-common)
-    (:use [clojure.tools.logging :only [info warn error debug]])
-    (:import 
-     (javax.swing JPanel JFrame JLabel JTextField JTextArea JButton SwingUtilities JList JScrollPane DefaultListModel AbstractAction Action KeyStroke)
-     (javax.swing JMenu JMenuBar JPasswordField)
-     (java.awt.event KeyEvent MouseAdapter WindowAdapter)
-     (java.awt Event)
-     (java.io File)
-     (net.miginfocom.swing MigLayout)))
+  "GUI for Jscfi (settings window)"
+  (:use
+    [clojure.tools.logging :only [debug info warn error]]
+    [org.vi-server.jscfi.gui-common
+     :only
+     [create-action create-file-chooser-button msgbox settings]])
+  (:import
+    (java.io File)
+    (javax.swing Action JButton JFrame JLabel JPanel JTextField)
+    (net.miginfocom.swing MigLayout)))
+
 
 (defn extract-source-code [target-directory]
     (let [tdu (str (.toURI (java.io.File. target-directory)))]
