@@ -40,6 +40,7 @@
  (let [
   panel (JPanel. (MigLayout. "", "[grow][pref][pref]", "[grow]"))
   frame (JFrame.)
+  timer (Timer.)
   list-model (DefaultListModel.)
   jlist (JList. list-model)
   action-create (create-action "Create task" (fn [_] (.setVisible (create-task-window 
@@ -48,7 +49,7 @@
   action-refresh (create-action "Refresh" (fn [_] 
 	  (.clear list-model)
 	  (doall (map #(.add list-model 0 (TaskListEntryImpl. %)) (get-tasks jscfi))))
-      { Action/SHORT_DESCRIPTION  "Refresh the list of tasks", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_R Event/CTRL_MASK) })
+      { Action/SHORT_DESCRIPTION  "Refresh the list of tasks",  })
   action-update (create-action "Update" (fn [_] 
 	  (periodic-update jscfi))
       { Action/SHORT_DESCRIPTION  "Run qstat to update things", Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_U Event/CTRL_MASK) })
@@ -86,9 +87,22 @@
         )
        )
       { Action/SHORT_DESCRIPTION  "Enter the list of nodes to start monitoring on"})
+  action-restart (create-action "Restart Jscfi" 
+      (fn [_] 
+        (info "Closing conenction")
+        (close-connection jscfi)
+        (info "Closing window")
+        (.cancel timer)
+        (.dispose frame)
+        (info "Restarting")
+        ((resolve 'org.vi-server.jscfi.main2/-main))
+       )
+      { Action/SHORT_DESCRIPTION  "Restart Jscfi (and reload user-specified source code)"
+        Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_R Event/CTRL_MASK)})
   menubar (JMenuBar.)
   view-menu (JMenu. "View")
   action-menu (JMenu. "Action")
+  debug-menu (JMenu. "Debug")
   observer (reify JscfiObserver 
       (connected [this] (.setVisible frame true))
       (compilation-failed [this task text] 
@@ -109,9 +123,6 @@
   (doto panel
    (.add (JScrollPane. jlist) "grow,span 3")
    (.revalidate))
-  (.add view-menu    action-refresh)
-  (.add view-menu    action-update)
-  (.addSeparator view-menu)
   (.add view-menu    action-open)
   (.addSeparator view-menu)
   (.add view-menu    action-settings)
@@ -124,17 +135,23 @@
   (.add action-menu    action-check-your-nodes)
   (.add action-menu    action-check-nodes-loadavg)
   (.addSeparator action-menu)
-  (.add action-menu    action-debug-print)
+  
+  (.add debug-menu action-debug-print)
+  (.add debug-menu action-refresh)
+  (.add debug-menu action-update)
+  (.addSeparator debug-menu)
+  (.add debug-menu action-restart)
   (doto menubar
    (.add action-menu)
-   (.add view-menu))
+   (.add view-menu)
+   (.add debug-menu))
   (add-observer jscfi observer)
   (.setVisible (create-authentication-window jscfi) true)
   (.addMouseListener jlist (proxy [MouseAdapter] [] (mouseClicked [event] (when (= (.getClickCount event) 2) (.actionPerformed action-open nil)))))
   (.addWindowListener frame (proxy [WindowAdapter] [] (windowClosing [_] (exit-if-needed))))
   (let [task (proxy [TimerTask] []
       	(run [] (periodic-update jscfi)))]
-   (. (new Timer) (schedule task (long 3000) (long 5000))))
+   (. timer (schedule task (long 3000) (long 5000))))
   frame))
 
 (defn gui-main [jscfi-engine]
