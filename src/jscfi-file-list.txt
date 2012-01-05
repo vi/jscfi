@@ -1,3 +1,4 @@
+cemerick/pomegranate.clj
 jscfi-file-list.txt
 org/vi_server/jscfi/jscfi.clj
 org/vi_server/jscfi/gui_settings_window.clj

@@ -1,11 +1,44 @@
 (ns org.vi-server.jscfi.main2
  "GUI for Jscfi"
  (:use
-  [clojure.tools.logging :only [debug error warn info]]
+  [clojure.tools.logging :only [debug error warn info trace]]
   [org.vi-server.jscfi.engine :only [get-jscfi-engine scripts-path]]
   [org.vi-server.jscfi.gui-common :only [settings]]
   [org.vi-server.jscfi.gui-main-window :only [gui-main]])
+ (:require org.vi-server.jscfi.main)
+ (:refer-clojure :exclude (add-classpath))
+ (:use [cemerick.pomegranate :only [add-classpath]])
  (:gen-class))
+
+(defn load-all-clojure-files [fname]
+ (trace "load-all-clojure-files" fname)
+ (let [f (java.io.File. fname)]
+  (if (.isDirectory f)
+   (doall (map #(load-all-clojure-files (str fname "/" %)) (seq (.list f))))
+   (when (re-find #"\.clj$" fname)
+    (debug "Loading  " fname)
+    (try (load-file fname) (catch Throwable e (error e)))))))
+
+
+(defn load-jscfi-from-directory [source-path]
+ "Load clojure files and use scripts from source-directory, then start GUI.
+ Expects the class loader to be already set to the proper thing"
+ 
+ (add-classpath (java.net.URL. (str "file://" source-path)))
+ (let [cl (-> (Thread/currentThread) (.getContextClassLoader))]
+  (info "Class loader: " cl)
+  (doall (map #(info "URL: " %) (seq (.getURLs cl)))))
+
+ (try
+  (info "Loading Clojure sources from " source-path)
+  (load-all-clojure-files source-path)
+  (info "All found clj files loaded")
+  (catch Throwable e (error e)))
+ (let [new-jscfi-scripts (str source-path "/org/vi_server/jscfi/scripts")]
+  (swap! scripts-path (fn[_] new-jscfi-scripts)))
+ (org.vi-server.jscfi.main/-main))
+
+
 
 (defn -main [& args] 
  (let [jscfi-path (-> (fn[]) (class) (.getClassLoader) (.getResource "jscfi-file-list.txt"))]
@@ -14,31 +47,40 @@
 
  (let [override-source-path (:source-directory @settings)]
   (if (empty? override-source-path)
-   (info "Starting Jscfi normally")
+   (do
+    (info "Starting Jscfi normally")
+    (apply org.vi-server.jscfi.main/-main args))
    (do 
-    (info "Loading Clojure sources from " override-source-path)
-    (defn load-all-clojure-files [fname]
-     (let [f (java.io.File. fname)]
-      (if (.isDirectory f)
-       (doall (map #(load-all-clojure-files 
-                     (str (java.io.File. (java.net.URI. (str (.toURI f) "/" %))))) (seq (.list f))))
-       (when (re-find #"\.clj$" fname)
-        (debug "Loading " fname)
-        (load-file fname)))))
-
+    (info "Using user-specified source directory")
+    ;; Hacky tricks here: 
+    ;; 1. Add our user-specified source directory to classpath (using new instance of class loader)
+    ;; 2. Call clojure.main -e "(some (source code))" in that class loader
+    ;;      "some source code":
+    ;;      a. Scan the source code directory for *.clj files and load them all
+    ;;      b. Override directory for scipts
+    ;;      c. Call org.vi-server.jscfi.main that will load everything more properly
+    ;; Just adding class path alone is not enough (we have old class files loaded).
     (try
+     (let [
+      classLoader (clojure.lang.DynamicClassLoader.)
+      _ (.addURL classLoader (java.net.URL. (str "file://" override-source-path)))
+      _ (.setContextClassLoader (Thread/currentThread) classLoader)
+      mainClass (.loadClass classLoader "clojure.main")
+      arrayOfStringsType (.getClass (into-array String []))
+      mainMethod (.getMethod mainClass "main" (into-array Class [arrayOfStringsType]))
 
-     (load-all-clojure-files override-source-path)
-     (info "All found clj files loaded")
+      form-to-execute `(do
+            (use 'org.vi-server.jscfi.main2)
+            (load-jscfi-from-directory ~override-source-path)
+        )
+      code-to-execute (str form-to-execute)
+      _ (trace "Calling clojure from string " code-to-execute)
+      ]
+      #_(.invoke mainMethod nil
+       (into-array Object [
+        (into-array String 
+         ["-e" code-to-execute])]))
+      (clojure.lang.Compiler/eval form-to-execute true)
+      )
 
-     (let [new-jscfi-scripts (str override-source-path "/org/vi_server/jscfi/scripts")]
-      (swap! scripts-path (fn[_] new-jscfi-scripts)))
-
-     (catch Exception e (error "exll" e))))))
-
- (let
-  [scripts-path-env (System/getenv "JSCFI_SCRIPTS")]
-  (when-not (empty? scripts-path-env)
-   (swap! scripts-path (fn[_] scripts-path-env))))
-
- (gui-main (get-jscfi-engine)))
+     (catch Exception e (error "exll" e)))))))
