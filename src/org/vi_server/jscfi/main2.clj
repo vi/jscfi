@@ -61,26 +61,5 @@
     ;;      c. Call org.vi-server.jscfi.main that will load everything more properly
     ;; Just adding class path alone is not enough (we have old class files loaded).
     (try
-     (let [
-      classLoader (clojure.lang.DynamicClassLoader.)
-      _ (.addURL classLoader (java.net.URL. (str "file://" override-source-path)))
-      _ (.setContextClassLoader (Thread/currentThread) classLoader)
-      mainClass (.loadClass classLoader "clojure.main")
-      arrayOfStringsType (.getClass (into-array String []))
-      mainMethod (.getMethod mainClass "main" (into-array Class [arrayOfStringsType]))
-
-      form-to-execute `(do
-            (use 'org.vi-server.jscfi.main2)
-            (load-jscfi-from-directory ~override-source-path)
-        )
-      code-to-execute (str form-to-execute)
-      _ (trace "Calling clojure from string " code-to-execute)
-      ]
-      #_(.invoke mainMethod nil
-       (into-array Object [
-        (into-array String 
-         ["-e" code-to-execute])]))
-      (clojure.lang.Compiler/eval form-to-execute true)
-      )
-
-     (catch Exception e (error "exll" e)))))))
+     (load-jscfi-from-directory override-source-path)
+     (catch Exception e (error "exll" e) (org.vi-server.jscfi.main/-main)))))))
