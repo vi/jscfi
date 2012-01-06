@@ -15,6 +15,9 @@
     [org.vi-server.jscfi.gui-settings-window
      :only
      [create-settings-window]]
+    [org.vi-server.jscfi.gui-log-window
+     :only
+     [create-log-window]]
     [org.vi-server.jscfi.gui-task-window :only [create-task-window]]
     [org.vi-server.jscfi.jscfi
      :only
@@ -135,6 +138,12 @@
        )
       { Action/SHORT_DESCRIPTION  "Restart Jscfi (and reload user-specified source code)"
         Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_R Event/CTRL_MASK)})
+  action-log (create-action "Show log" 
+      (fn [_] 
+       (.setVisible (create-log-window) true)
+       )
+      { Action/SHORT_DESCRIPTION  "Show messages (like on console)"
+        Action/ACCELERATOR_KEY (KeyStroke/getKeyStroke KeyEvent/VK_L Event/CTRL_MASK)})
   menubar (JMenuBar.)
   view-menu (JMenu. "View")
   action-menu (JMenu. "Action")
@@ -175,6 +184,8 @@
   (.add debug-menu action-debug-print)
   (.add debug-menu action-refresh)
   (.add debug-menu action-update)
+  (.addSeparator debug-menu)
+  (.add debug-menu action-log)
   (.addSeparator debug-menu)
   (.add debug-menu action-restart)
   (doto menubar

@@ -38,6 +38,7 @@ org/vi_server/jscfi/main.clj
 org/vi_server/jscfi/gui_main_window.clj
 org/vi_server/jscfi/gui_common.clj
 org/vi_server/jscfi/engine.clj
+org/vi_server/jscfi/gui_log_window.clj
 org/vi_server/jscfi/main2.clj
 org/vi_server/jscfi/gui_authentication_window.clj
 org/vi_server/diststatanalyse/LogEventCmdline.java
