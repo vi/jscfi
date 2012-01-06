@@ -1,5 +1,6 @@
 cemerick/pomegranate.clj
 jscfi-file-list.txt
+log4j.properties
 org/vi_server/jscfi/jscfi.clj
 org/vi_server/jscfi/gui_settings_window.clj
 org/vi_server/jscfi/scripts/stat-collector-nodes.txt
