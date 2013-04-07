@@ -49,7 +49,7 @@
     (remove-task [this task-id])
     (compile-task [this task-id])
     (upload-task [this task-id])
-    (schedule-task [this task-id])
+    (schedule-task [this task-id do-collect-stats do-kill-tasks])
     (cancel-task [this task-id])
     (suspend-task [this task-id])
     (resume-task [this task-id])

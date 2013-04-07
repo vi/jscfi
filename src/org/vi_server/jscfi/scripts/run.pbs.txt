@@ -4,22 +4,40 @@
 hostname
 DIR="%s"
 TDIR="%s"
+COLLECT_STATS="%s"
+KILL_TASKS="%s"
+
 cd $HOME/jscfi/"$DIR"/"$TDIR" || exit 1
 date >> log
 hostname >> log
 echo "PBS_O_WORKDIR=" >> log
 cp "$PBS_NODEFILE" pbs-nodes
+NP=`wc -l pbs-nodes | awk '{print $1}'`
 
 echo "server `date +%%s.%%N` -1 task_started" >> stat
-$HOME/jscfi/bin/diststatcollect pbs-nodes >> stat &
-STATCOLLECT_PID=$!
 
-/usr/bin/time -f '%%e' -o timing mpirun --hostfile `pwd`/pbs-nodes program %s 2> stderr > stdout
+if [ "$COLLECT_STATS" = "yes" ]; then
+    $HOME/jscfi/bin/diststatcollect pbs-nodes >> stat &
+    STATCOLLECT_PID=$!
+fi
+
+function execute() {
+    %s
+}
+
+execute %s 2> stderr > stdout
+
+
 date > completed
 
-kill $STATCOLLECT_PID
-for i in `cat pbs-nodes | sort | uniq`; do 
-    ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no -o ConnectTimeout=3 $i "pkill -9 -u `id -u`"; 
-done
+if [ "$COLLECT_STATS" = "yes" ]; then
+    kill $STATCOLLECT_PID
+fi
+
+if [ "$KILL_TASKS" = "yes" ]; then
+    for i in `cat pbs-nodes | sort | uniq`; do 
+        ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no -o ConnectTimeout=3 $i "pkill -9 -u `id -u`"; 
+    done
+fi
 
 echo "server `date +%%s.%%N` -1 task_stopped" >> stat

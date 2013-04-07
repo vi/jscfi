@@ -1,0 +1,1 @@
+/usr/bin/time -f '%%e' -o timing mpirun --hostfile `pwd`/pbs-nodes program "$@"

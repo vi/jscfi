@@ -1,0 +1,8 @@
+
+MATH_BIN=math
+
+if [ -x $HOME/Mathematica ]; then
+    MATH_BIN=$HOME/Mathematica
+fi
+
+/usr/bin/time -f '%%e' -o timing "$MATH_BIN" "$@" < program > output.txt

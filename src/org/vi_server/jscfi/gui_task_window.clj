@@ -11,7 +11,9 @@
       create-action
       create-file-chooser-button
       get-monitoring-output
-      msgbox]]
+      msgbox
+      settings
+      ]]
     [org.vi-server.jscfi.jscfi
      :only
      [add-observer
@@ -202,7 +204,11 @@
   action-upload (create-action "Upload" (fn [_] (upload-task jscfi @task-id))
       { Action/SHORT_DESCRIPTION  "Upload the input data as input.txt"})
 
-  action-schedule (create-action "Schedule" (fn [_] (schedule-task jscfi @task-id))
+  action-schedule (create-action "Schedule" (fn [_] 
+            (schedule-task jscfi @task-id 
+                (:collect-stats @settings)
+                (:kill-tasks @settings)
+                ))
       { Action/SHORT_DESCRIPTION  "Schedule the task for execution"})
 
   action-download (create-action "Download" (fn [_] (download-task jscfi @task-id))

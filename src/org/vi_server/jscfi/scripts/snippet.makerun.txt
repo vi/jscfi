@@ -1,0 +1,4 @@
+cp pbs-nodes source.c/
+mv input.txt ./
+/usr/bin/time -f '%%e' -o timing make -C source.c run "$@"
+mv source.c/output.txt ./

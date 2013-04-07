@@ -340,27 +340,38 @@
          (newtasks (assoc tasks (:id task) (-> task (assoc :status :compiled)))))
      )))
 
-    (rj-method schedule-task (task-id) 
+    (rj-method schedule-task (task-id collect-stats kill-tasks) 
      (info "Schedule task") 
      (let [task (get tasks task-id)]
       (let [
-       run-pbs-file (get {
-	:single-c-file "run.pbs.txt"
-	:single-cpp-file "run.pbs.txt"
-	:directory-with-makefile "run.pbs.txt"
-	:directory-with-makefile-make-run "run.pbs.makerun.txt"
-	:single-lammps-file "run.pbs.lammps.txt"
-	:directory-with-lammps-file "run.pbs.lammpsdir.txt"
-	:mathematica-input "run.pbs.mathematica.txt"
-	:mathematica-saved-package "run.pbs.mathematica.txt"
+       run-pbs-file "run.pbs.txt"
+       snippet-file (get {
+          :single-c-file "snippet.mpirun.txt"
+          :single-cpp-file "snippet.mpirun.txt"
+          :directory-with-makefile "snippet.mpirun.txt"
+          :directory-with-makefile-make-run "snippet.makerun.txt"
+          :single-lammps-file "snippet.lammps.txt"
+          :directory-with-lammps-file "snippet.lammpsdir.txt"
+          :mathematica-input "snippet.mathematica.txt"
+          :mathematica-saved-package "snippet.mathematica.txt"
         } (:source-mode task))
        schedule-result (trim-newline (ssh-execute session 
-	   (read-script "schedule.txt" directory (:id task))
-	   (read-script run-pbs-file (:walltime task) (:node-count task) (:name task) directory (:id task) (:cmdadd task))))
+        (read-script "schedule.txt" directory (:id task))
+        (read-script run-pbs-file 
+          (:walltime task) 
+          (:node-count task) 
+          (:name task) 
+          directory 
+          (:id task)
+          (if collect-stats "yes" "no")
+          (if kill-tasks "yes" "no")
+          (read-script snippet-file)
+          (:cmdadd task)
+          )))
        ]
        (info "Scheduler id:" schedule-result)
        (if 
-	(= schedule-result "")
+        (= schedule-result "")
         (do (emit compilation-failed task schedule-result) state)
         (newtasks (assoc tasks (:id task)
 	    (-> task (assoc :status :scheduled) (assoc :pbs-id schedule-result)))))
