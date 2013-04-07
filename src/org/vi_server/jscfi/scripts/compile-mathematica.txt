@@ -1,0 +1,7 @@
+DIR="%s"
+TDIR="%s"
+mkdir -p jscfi/"$DIR"/"$TDIR" && 
+cd jscfi/"$DIR"/"$TDIR" && 
+rm -f program && 
+cp source.c  program
+echo -n $? > ret

@@ -294,6 +294,8 @@
      :directory-with-makefile-make-run
      :single-lammps-file
      :directory-with-lammps-file
+     :mathematica-input
+     :mathematica-saved-package
      ])
     (register-task [this task] (info "Task registered") (debug (str "task data: " task)) (let [rnd-id (.toString (rand))] 
 	(send state-agent #(assoc % :tasks (persist-tasks (:session %) state-agent (assoc (:tasks %) rnd-id 
@@ -323,6 +325,8 @@
 	:directory-with-makefile-make-run "compile-dir.txt"
 	:single-lammps-file "compile-dummy.txt"
 	:directory-with-lammps-file "compile-lammps.txt"
+	:mathematica-input "compile-mathematica.txt"
+	:mathematica-saved-package "compile-mathematicapackage.txt"
 	} (:source-mode task) )
        compilation-result (ssh-execute session (read-script script directory (:id task)) nil)
        compilation-ok (ssh-execute session (read-script "compile-ret.txt" directory (:id task)) nil)
@@ -347,6 +351,8 @@
 	:directory-with-makefile-make-run "run.pbs.makerun.txt"
 	:single-lammps-file "run.pbs.lammps.txt"
 	:directory-with-lammps-file "run.pbs.lammpsdir.txt"
+	:mathematica-input "run.pbs.mathematica.txt"
+	:mathematica-saved-package "run.pbs.mathematica.txt"
         } (:source-mode task))
        schedule-result (trim-newline (ssh-execute session 
 	   (read-script "schedule.txt" directory (:id task))

@@ -1,0 +1,35 @@
+#PBS -l walltime=%s
+#PBS -l nodes=%s
+#PBS -N %s
+hostname
+DIR="%s"
+TDIR="%s"
+cd $HOME/jscfi/"$DIR"/"$TDIR" || exit 1
+date >> log
+hostname >> log
+echo "PBS_O_WORKDIR=" >> log
+cp "$PBS_NODEFILE" pbs-nodes
+NP=`wc -l pbs-nodes | awk '{print $1}'`
+
+echo "server `date +%%s.%%N` -1 task_started" >> stat
+$HOME/jscfi/bin/diststatcollect pbs-nodes >> stat &
+STATCOLLECT_PID=$!
+
+MATH_BIN=math
+
+if [ -x $HOME/Mathematica ]; then
+    MATH_BIN=$HOME/Mathematica
+fi
+
+CMDADD=%s
+
+/usr/bin/time -f '%%e' -o timing "$MATH_BIN" < program > output.txt
+
+date > completed
+
+kill $STATCOLLECT_PID
+for i in `cat pbs-nodes | sort | uniq`; do 
+    ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no -o ConnectTimeout=3 $i "pkill -9 -u `id -u`"; 
+done
+
+echo "server `date +%%s.%%N` -1 task_stopped" >> stat
