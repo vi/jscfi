@@ -7,10 +7,10 @@
      [create-action create-file-chooser-button msgbox settings]])
   (:import
     (java.io File)
-    (javax.swing Action JButton JFrame JLabel JPanel JTextField)
+    (javax.swing Action JButton JFrame JLabel JPanel JTextField JCheckBox)
     (net.miginfocom.swing MigLayout)))
 
-(def settings-window-size {:width 430, :height 170})
+(def settings-window-size {:width 430, :height 200})
 
 (defn extract-source-code [target-directory]
     (let [tdu (str (.toURI (java.io.File. target-directory)))]
@@ -42,6 +42,8 @@
   frame (JFrame.)
   prefs (.node (java.util.prefs.Preferences/userRoot) "/org/vi-server/jscfi")
   hostsfile-field (JTextField. (:known-hosts @settings))
+  collectstats-checkbox (JCheckBox.  "" (:collect-stats @settings))
+  killtasks-checkbox (JCheckBox. "" (:kill-tasks @settings))
   log-viewer-field (JTextField. (:log-viewer @settings))
   source-directory-field (JTextField. (:source-directory @settings))
   action-save (create-action "Save" (fn [_] 
@@ -49,16 +51,26 @@
         known-hosts (.getText hostsfile-field),
         log-viewer (.getText log-viewer-field)
         source-directory (.getText source-directory-field)
+        collect-stats (.isSelected collectstats-checkbox)
+        kill-tasks (.isSelected killtasks-checkbox)
         ]
        (.put prefs "known_hosts" known-hosts)
        (.put prefs "log_viewer" log-viewer)
        (.put prefs "source_directory" source-directory)
+       (.put prefs "collect_stats" (if collect-stats "true" "false"))
+       (.put prefs "kill_tasks" (if kill-tasks "true" "false"))
        (when (not (empty? source-directory))
         (let [sample-jscfi-file (str source-directory "/org/vi_server/jscfi/jscfi.clj")]
          (when (not (.canRead (File. sample-jscfi-file)))
           (msgbox (str "Note that " sample-jscfi-file " appears to be unavailable.\n"
            "Source loading will not work probably.")))))
-       (swap! settings (fn[_]{:known-hosts known-hosts, :log-viewer log-viewer, :source-directory source-directory}))) 
+       (swap! settings (fn[_]{
+          :known-hosts known-hosts, 
+          :log-viewer log-viewer, 
+          :source-directory source-directory,
+          :collect-stats collect-stats,
+          :kill-tasks kill-tasks,
+          }))) 
       ) {Action/SHORT_DESCRIPTION  "Save setings (does not close the window)"})
   action-extract-source (create-action "Extract source code" (fn [_] 
     (let [source-directory (.getText source-directory-field)]
@@ -74,6 +86,12 @@
    (.add (doto (JLabel. "Known hosts:") (.setToolTipText "File to store the host key of server. Used for security.")))
    (.add hostsfile-field "growx")
    (.add (create-file-chooser-button hostsfile-field :open) "wrap")
+   
+   (.add (doto (JLabel. "Start task statistics collector?") (.setToolTipText "Whether to start special program on all nodes that will collect statistical data about used resources")))
+   (.add collectstats-checkbox "growx,wrap")
+   
+   (.add (doto (JLabel. "Kill tasks explicitly after use?") (.setToolTipText "Kill all current user's tasks on all nodes after the task terminates")))
+   (.add killtasks-checkbox "growx,wrap")
    
    (.add (doto (JLabel. "Log viewer:") (.setToolTipText
     (str "<html>Executable jar file to load external log viewer.<br/>"

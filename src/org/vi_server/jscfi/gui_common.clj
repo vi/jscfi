@@ -18,6 +18,8 @@
     known-hosts (.get prefs "known_hosts" "")
     log-viewer (.get prefs "log_viewer" "")
     source-directory (.get prefs "source_directory" "")
+    collect-stats (= (.get prefs "collect_stats" "true") "true")
+    kill-tasks (= (.get prefs "kill_tasks" "true") "true")
 
     ;; if known_hosts is not saved in preferences, try to detect it
     known-hosts2 
@@ -36,7 +38,13 @@
        known-hosts)
       (catch Exception e (.printStackTrace e) known-hosts))
    ]
-   {:known-hosts known-hosts2, :log-viewer log-viewer, :source-directory source-directory}   
+   {
+    :known-hosts known-hosts2, 
+    :log-viewer log-viewer, 
+    :source-directory source-directory,
+    :collect-stats collect-stats,
+    :kill-tasks kill-tasks,
+    }   
   )
  )
 
