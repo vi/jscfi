@@ -6,3 +6,5 @@ Binary snapshots available at http://vi-server.org/pub/
 To build it from source use "leiningen" tool ("lein uberjar" command)
 
 "java.util.zip.ZipException: duplicate entry" => buggy leinigen, use newer fixed version (or some legacy one)
+
+It's unlikely you can use the program without somebody explaining things first...
