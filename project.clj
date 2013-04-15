@@ -3,7 +3,6 @@
    "1.8" 
    :description "GUI for uploading MPI programs into PBS-controlled servers" 
    :dependencies [[org.clojure/clojure "1.5.1"] 
-                 #_ "Alpha version because of http://dev.clojure.org/jira/browse/CLJ-855"
                   [org.clojure/tools.logging "0.2.3"]
 		  [com/miglayout/miglayout "3.7.2"]
 		  [com/jcraft/jsch "0.1.44-1"]
