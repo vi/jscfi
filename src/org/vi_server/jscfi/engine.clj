@@ -19,6 +19,7 @@
       message
       something-changed
       text-info]])
+  (:require clojure.edn)
   (:import
     (com.jcraft.jsch
       ChannelSftp
@@ -61,10 +62,29 @@
  (info (format "Reading script %s with format arguments %s"  script-name args))
  (apply format (read-script-noformat script-name) args))
 
+;;(defn serialise [object]
+;; (binding [*print-dup* true] (with-out-str (prn object))))
+ 
 (defn serialise [object]
- (binding [*print-dup* true] (with-out-str (prn object))))
+ (-> 
+  object 
+  prn-str 
+  (clojure.string/replace " {" "\n{") 
+  (clojure.string/replace ", " ",\n")))
 
-(defn deserialise [string] (read-string string))
+  
+  
+;;(defn deserialise [string] (read-string string))
+(defn deserialise [string]
+ (let [fixed-string
+  (if 
+   (re-matches #".*clojure\.lang\.PersistentArrayMap/create(?:.*\n*)*" string)
+   ;; old format
+   (nth (re-find #_"(" #"clojure.lang.PersistentArrayMap/create (.*?)\)" string) 1)
+   ;; normal format
+   string
+   )]
+  (clojure.edn/read-string fixed-string)))
 
 (defn ssh-execute-output [session command input-str output]
  (info "ssh-execute-output")
