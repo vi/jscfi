@@ -12,4 +12,5 @@
     :dev-dependencies [[slamhound "1.2.0"]]
     :main org.vi-server.jscfi.main2
     :java-source-path "src"
+    :aot :all
 )
